@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 
 # Başlık
-st.title("CSV File Upload")
+st.title("Hypothesis Testing App")
 
 # CSV dosyası yükleme
 uploaded_file = st.file_uploader("Upload a CSV file", type=["csv"])
