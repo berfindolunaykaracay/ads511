@@ -49,7 +49,6 @@ st.set_page_config(
 )
 
 # Sidebar setup
-st.sidebar.image("TEDU_LOGO.png", use_column_width=True)
 st.sidebar.title("Statistical Testing Suite")
 st.sidebar.header("Available Hypothesis Tests")
 for test, description in test_descriptions.items():
