@@ -12,6 +12,13 @@ from scipy.stats import chi2_contingency, fisher_exact
 # Configure pandas display options
 pd.options.display.float_format = '{:,.4f}'.format
 
+# Streamlit app configuration (must be the first Streamlit command)
+st.set_page_config(
+    page_title="Advanced Hypothesis Testing App",
+    page_icon="📊",
+    layout="wide",
+)
+
 # Set custom background style
 page_bg = """
 <style>
@@ -55,13 +62,6 @@ test_descriptions = {
     "Chi_squared_test": "Test associations between categorical variables using the Chi-Squared Test.",
     "Fisher_exact_test": "Assess associations for small sample categorical data with Fisher's Exact Test.",
 }
-
-# Streamlit app configuration
-st.set_page_config(
-    page_title="Advanced Hypothesis Testing App",
-    page_icon="📊",
-    layout="wide",
-)
 
 # Sidebar setup
 st.sidebar.title("Statistical Testing Suite")
