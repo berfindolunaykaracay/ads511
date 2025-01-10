@@ -4,14 +4,16 @@ import matplotlib.pyplot as plt
 
 try:
     import seaborn as sns
+    seaborn_available = True
 except ModuleNotFoundError:
+    seaborn_available = False
     st.error("The required module 'seaborn' is not installed. Please install it by running 'pip install seaborn'.")
 
 # Başlık
 st.title("Data Input and Visualization App")
 st.sidebar.header("Data Input")
 
-# Veri girişi seçim
+# Veri girişi seçimi
 data_input_method = st.sidebar.radio("Select Data Input Method", ["Upload CSV", "Manual Entry"])
 
 if data_input_method == "Upload CSV":
@@ -47,11 +49,11 @@ if 'data' in locals():
     # Görselleştirme seçenekleri
     st.sidebar.header("Visualization")
     if st.sidebar.checkbox("Show Data Visualization"):
-        col = st.sidebar.selectbox("Select column to visualize", data.columns)
-        plot_type = st.sidebar.selectbox("Select plot type", ["Histogram", "Boxplot", "Scatterplot"])
+        if seaborn_available:
+            col = st.sidebar.selectbox("Select column to visualize", data.columns)
+            plot_type = st.sidebar.selectbox("Select plot type", ["Histogram", "Boxplot", "Scatterplot"])
 
-        fig, ax = plt.subplots()
-        if 'sns' in locals():
+            fig, ax = plt.subplots()
             if plot_type == "Histogram":
                 sns.histplot(data[col], kde=True, ax=ax)
             elif plot_type == "Boxplot":
@@ -64,6 +66,5 @@ if 'data' in locals():
             st.pyplot(fig)
         else:
             st.error("Seaborn is not available, so visualizations cannot be displayed.")
-
 else:
     st.write("Please upload a CSV file or manually enter data to begin.")
