@@ -1,7 +1,11 @@
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
-import seaborn as sns
+
+try:
+    import seaborn as sns
+except ModuleNotFoundError:
+    st.error("The required module 'seaborn' is not installed. Please install it by running 'pip install seaborn'.")
 
 # Başlık
 st.title("Data Input and Visualization App")
@@ -47,16 +51,19 @@ if 'data' in locals():
         plot_type = st.sidebar.selectbox("Select plot type", ["Histogram", "Boxplot", "Scatterplot"])
 
         fig, ax = plt.subplots()
-        if plot_type == "Histogram":
-            sns.histplot(data[col], kde=True, ax=ax)
-        elif plot_type == "Boxplot":
-            sns.boxplot(x=data[col], ax=ax)
-        elif plot_type == "Scatterplot":
-            x_col = st.sidebar.selectbox("Select X-axis column", data.columns)
-            y_col = st.sidebar.selectbox("Select Y-axis column", data.columns)
-            sns.scatterplot(x=data[x_col], y=data[y_col], ax=ax)
+        if 'sns' in locals():
+            if plot_type == "Histogram":
+                sns.histplot(data[col], kde=True, ax=ax)
+            elif plot_type == "Boxplot":
+                sns.boxplot(x=data[col], ax=ax)
+            elif plot_type == "Scatterplot":
+                x_col = st.sidebar.selectbox("Select X-axis column", data.columns)
+                y_col = st.sidebar.selectbox("Select Y-axis column", data.columns)
+                sns.scatterplot(x=data[x_col], y=data[y_col], ax=ax)
 
-        st.pyplot(fig)
+            st.pyplot(fig)
+        else:
+            st.error("Seaborn is not available, so visualizations cannot be displayed.")
 
 else:
     st.write("Please upload a CSV file or manually enter data to begin.")
