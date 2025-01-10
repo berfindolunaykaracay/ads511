@@ -12,6 +12,21 @@ from scipy.stats import chi2_contingency, fisher_exact
 # Configure pandas display options
 pd.options.display.float_format = '{:,.4f}'.format
 
+# Set custom background style
+page_bg = """
+<style>
+body {
+    background-color: #f0f8ff;
+    color: #333333;
+    font-family: 'Arial', sans-serif;
+}
+.sidebar .sidebar-content {
+    background-color: #e6e6fa;
+}
+</style>
+"""
+st.markdown(page_bg, unsafe_allow_html=True)
+
 # Helper functions
 def check_normality(data):
     """Check for normality using the Shapiro-Wilk test."""
