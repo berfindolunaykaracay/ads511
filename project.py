@@ -11,7 +11,7 @@ except ModuleNotFoundError:
 st.title("Data Input and Visualization App")
 st.sidebar.header("Data Input")
 
-# Veri girişi seçimi
+# Veri girişi seçim
 data_input_method = st.sidebar.radio("Select Data Input Method", ["Upload CSV", "Manual Entry"])
 
 if data_input_method == "Upload CSV":
