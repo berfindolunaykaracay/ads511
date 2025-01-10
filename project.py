@@ -62,21 +62,25 @@ st.markdown(
 )
 
 # Step 1: Data input
-st.header("Step 1: Upload or Input Data")
-data_choice = st.radio("How would you like to provide data?", ("Upload CSV", "Manual Entry"))
+st.header("Step 1: Input Your Data")
+data_choice = st.radio("How would you like to input your data?", ("Upload a File", "Paste or Type Data"))
 
 all_groups = []
-if data_choice == "Upload CSV":
-    uploaded_file = st.file_uploader("Upload your dataset (CSV format)", type=["csv"])
+if data_choice == "Upload a File":
+    uploaded_file = st.file_uploader("Upload a CSV or Excel file", type=["csv", "xlsx"])
     if uploaded_file:
-        data = pd.read_csv(uploaded_file)
-        st.write("Preview of Uploaded Dataset:")
-        st.dataframe(data.head())
-        columns = st.multiselect("Select columns for analysis", data.columns)
-        if columns:
-            all_groups = [data[col].dropna().tolist() for col in columns]
-elif data_choice == "Manual Entry":
-    group_input = st.text_area("Manually enter data arrays (e.g., [1, 2, 3]) per line.")
+        file_type = "csv" if uploaded_file.name.endswith(".csv") else "excel"
+        try:
+            data = pd.read_csv(uploaded_file) if file_type == "csv" else pd.read_excel(uploaded_file)
+            st.write("Preview of Uploaded Data:")
+            st.dataframe(data.head())
+            columns = st.multiselect("Select columns for analysis", data.columns)
+            if columns:
+                all_groups = [data[col].dropna().tolist() for col in columns]
+        except Exception as e:
+            st.error(f"Error reading file: {e}")
+elif data_choice == "Paste or Type Data":
+    group_input = st.text_area("Enter data groups. Use one group per line, like [1, 2, 3].")
     if group_input:
         try:
             all_groups = [eval(line.strip()) for line in group_input.splitlines() if line.strip()]
@@ -84,7 +88,7 @@ elif data_choice == "Manual Entry":
             st.error(f"Error processing input: {e}")
 
 if not all_groups:
-    st.warning("Please upload or enter valid data to proceed.")
+    st.warning("Please provide valid data to proceed.")
     st.stop()
 
 # Step 2: Assumption checks
