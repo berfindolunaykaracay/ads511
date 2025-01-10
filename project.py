@@ -1,6 +1,28 @@
 import streamlit as st
 import pandas as pd
 
+# Sayfa stil ayarları
+st.markdown(
+    """
+    <style>
+        body {
+            background-color: #f0f8ff;
+            color: #333;
+        }
+        h1 {
+            color: #4a90e2;
+        }
+        .stButton button {
+            background-color: #4a90e2;
+            color: white;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
 # Başlık
 st.markdown("<h1 style='text-align: center;'>Hypothesis Testing App</h1>", unsafe_allow_html=True)
 
