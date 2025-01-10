@@ -2,7 +2,11 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 from scipy import stats
-from statsmodels.stats.contingency_tables import mcnemar
+try:
+    from statsmodels.stats.contingency_tables import mcnemar
+except ModuleNotFoundError:
+    st.error("Required module 'statsmodels' is not installed. Install it using 'pip install statsmodels'.")
+    st.stop()
 from scipy.stats import chi2_contingency, fisher_exact
 
 # Configure pandas display options
