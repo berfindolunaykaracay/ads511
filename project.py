@@ -22,13 +22,16 @@ if uploaded_file:
     st.write("### Full Dataset")
     st.dataframe(data)
 
-    # İlk 9 sütun için seçim yapma
-    st.write("### Select a Column from First 9 Columns")
+    # İlk 9 sütun için birden fazla seçim yapma
+    st.write("### Select Columns from First 9 Columns")
     first_9_columns = data.columns[:9]
-    selected_column = st.selectbox("Select a column", first_9_columns)
+    selected_columns = st.multiselect("Select columns", first_9_columns)
 
-    st.write(f"### Data for Selected Column: {selected_column}")
-    st.dataframe(data[[selected_column]].reset_index(drop=True))
+    if selected_columns:
+        st.write(f"### Data for Selected Columns: {', '.join(selected_columns)}")
+        st.dataframe(data[selected_columns].reset_index(drop=True))
+    else:
+        st.write("No columns selected.")
 
     # Görselleştirme seçenekleri
     st.markdown("<h2 style='text-align: center;'>Data Visualization</h2>", unsafe_allow_html=True)
