@@ -18,22 +18,24 @@ if uploaded_file:
     st.write(f"**Number of rows:** {data.shape[0]}")
     st.write(f"**Number of columns:** {data.shape[1]}")
 
-    # Sütun isimleri ve veri tipleri
-    st.write("### Column Information")
-    st.dataframe(data.dtypes.rename("Data Type"))
+    # Tüm veri önizleme
+    st.write("### Full Dataset")
+    st.dataframe(data)
 
-    # Eksik değerlerin özeti
-    st.write("### Missing Data Summary")
-    missing_data = data.isnull().sum()
-    missing_data = missing_data[missing_data > 0]
-    if not missing_data.empty:
-        st.dataframe(missing_data.rename("Missing Values"))
+    # Kategoriye göre veri filtreleme
+    st.write("### Filter Data by Categories")
+    categorical_columns = data.select_dtypes(include=['object', 'category']).columns
+
+    if not categorical_columns.empty:
+        category_column = st.selectbox("Select a categorical column", categorical_columns)
+        unique_values = data[category_column].dropna().unique()
+        selected_value = st.selectbox("Select a value", unique_values)
+
+        filtered_data = data[data[category_column] == selected_value]
+        st.write(f"### Filtered Data for {category_column} = {selected_value}")
+        st.dataframe(filtered_data)
     else:
-        st.write("No missing data detected.")
-
-    # İlk birkaç satır
-    st.write("### First 5 Rows of the Dataset")
-    st.dataframe(data.head())
+        st.write("No categorical columns available for filtering.")
 
     # Görselleştirme seçenekleri
     st.markdown("<h2 style='text-align: center;'>Data Visualization</h2>", unsafe_allow_html=True)
