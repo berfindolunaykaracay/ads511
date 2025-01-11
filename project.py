@@ -39,9 +39,11 @@ if uploaded_file:
         elif len(selected_columns) == 2:
             st.write(f"### Relationship between {selected_columns[0]} and {selected_columns[1]}")
             fig, ax = plt.subplots()
-            data[[selected_columns[0], selected_columns[1]]].dropna().groupby(selected_columns[1]).boxplot(
-                column=selected_columns[0], ax=ax, subplots=False)
-            plt.suptitle("")
+            filtered_data = data[[selected_columns[0], selected_columns[1]]].dropna()
+            grouped_data = filtered_data.groupby(selected_columns[1])[selected_columns[0]].apply(list)
+            ax.boxplot(grouped_data)
+            ax.set_xticklabels(grouped_data.index, rotation=45)
+            ax.set_title(f"Boxplot of {selected_columns[0]} by {selected_columns[1]}")
             st.pyplot(fig)
 
         # Step 4: Hipotez testi için sütun seçimi
@@ -109,7 +111,7 @@ if uploaded_file:
                                 f_stat, p_val = f_oneway(*groups)
                                 st.write(f"F-Statistic: {f_stat}, P-Value: {p_val}")
                             elif test == "Chi-Square Test (independent categorical data)":
-                                contingency_table = pd.crosstab(data[col], data[col])
+                                contingency_table = pd.crosstab(data[col], data[selected_columns[1]])
                                 if contingency_table.shape[0] > 1 and contingency_table.shape[1] > 1:
                                     try:
                                         chi2, p_val, _, _ = chi2_contingency(contingency_table)
