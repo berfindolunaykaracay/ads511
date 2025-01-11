@@ -50,14 +50,22 @@ if uploaded_file:
     if testing_columns:
         st.write(f"### _Selected Columns for Testing:_ {', '.join([f'*{col}*' for col in testing_columns])}")
 
-        # Data type seçimi sadece sütunlar seçildiyse
-        st.write("### _Select Data Type and Group Information for Testing Columns_")
+        # Veri türü otomatik tespiti
+        st.write("### _Detected Data Types:_")
+        data_type_choices = {}
+        for col in testing_columns:
+            if pd.api.types.is_numeric_dtype(data[col]):
+                data_type_choices[col] = "Numerical"
+            else:
+                data_type_choices[col] = "Categorical"
+            st.write(f"_{col}: {data_type_choices[col]}_")
+
+        # Test önerileri görseldeki mantığa göre yapılır
+        st.write("### _Recommended Tests:_")
         recommendations = []
 
         for col in testing_columns:
-            data_type = st.selectbox(
-                f"Select data type for {col}", ["Numerical", "Categorical"], key=f"type_{col}"
-            )
+            data_type = data_type_choices[col]
 
             if data_type == "Numerical":
                 group_count = st.radio(
@@ -99,8 +107,6 @@ if uploaded_file:
                     else:
                         recommendations.append((col, "Chi-Square Test"))
 
-        # Test önerilerini göster
-        st.write("### _Recommended Tests:_")
         if recommendations:
             for col, test in recommendations:
                 st.write(f"*{col}: {test}*")
