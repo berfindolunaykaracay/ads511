@@ -1,9 +1,7 @@
 import streamlit as st
 import pandas as pd
-import numpy as np
-from scipy.stats import ttest_rel, ttest_ind, chi2_contingency, f_oneway, mannwhitneyu, wilcoxon
+from scipy.stats import chi2_contingency, f_oneway, mannwhitneyu, wilcoxon
 import matplotlib.pyplot as plt
-import seaborn as sns
 
 # Başlık
 st.markdown("<h1 style='text-align: center; font-weight: bold;'>Advanced Hypothesis Testing App</h1>", unsafe_allow_html=True)
@@ -35,12 +33,14 @@ if uploaded_file:
         if len(selected_columns) == 1:
             st.write(f"### Distribution of {selected_columns[0]}")
             fig, ax = plt.subplots()
-            sns.histplot(data[selected_columns[0]], kde=True, ax=ax)
+            data[selected_columns[0]].plot(kind='hist', ax=ax, bins=20, alpha=0.7)
+            ax.set_title(f"Histogram of {selected_columns[0]}")
             st.pyplot(fig)
         elif len(selected_columns) == 2:
             st.write(f"### Relationship between {selected_columns[0]} and {selected_columns[1]}")
             fig, ax = plt.subplots()
-            sns.boxplot(x=data[selected_columns[1]], y=data[selected_columns[0]], ax=ax)
+            data.boxplot(column=selected_columns[0], by=selected_columns[1], ax=ax)
+            plt.suptitle("")
             st.pyplot(fig)
 
         # Step 4: Hipotez testi için sütun seçimi
