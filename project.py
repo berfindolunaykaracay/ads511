@@ -52,6 +52,7 @@ if uploaded_file:
                     elif unique_values > 2:
                         recommendations.append((col, "One-Way ANOVA"))
                         recommendations.append((col, "Kruskal-Wallis Test"))
+                        recommendations.append((col, "Friedman Test"))
                 else:
                     unique_values = data[col].nunique()
                     if unique_values == 2:
@@ -92,6 +93,11 @@ if uploaded_file:
                         groups = [col_data[:len(col_data)//3], col_data[len(col_data)//3:2*len(col_data)//3], col_data[2*len(col_data)//3:]]
                         stat, p_val = kruskal(*groups)
                         st.write(f"Statistic: {stat}, P-Value: {p_val}")
+                    elif selected_test == "Friedman Test":
+                        col_data = data[selected_test_col].dropna()
+                        groups = [col_data[:len(col_data)//3], col_data[len(col_data)//3:2*len(col_data)//3], col_data[2*len(col_data)//3:]]
+                        stat, p_val = friedmanchisquare(*groups)
+                        st.write(f"Friedman Statistic: {stat}, P-Value: {p_val}")
                     elif selected_test == "Fisher Exact Test":
                         contingency_table = pd.crosstab(data[selected_test_col], data[selected_test_col])
                         _, p_val = fisher_exact(contingency_table)
@@ -100,6 +106,10 @@ if uploaded_file:
                         contingency_table = pd.crosstab(data[selected_test_col], data[selected_test_col])
                         result = mcnemar(contingency_table)
                         st.write(f"Statistic: {result.statistic}, P-Value: {result.pvalue}")
+                    elif selected_test == "Chi-Square Test":
+                        contingency_table = pd.crosstab(data[selected_test_col], data[selected_test_col])
+                        chi2, p_val, _, _ = chi2_contingency(contingency_table)
+                        st.write(f"Chi-Square Statistic: {chi2}, P-Value: {p_val}")
                 except Exception as e:
                     st.write(f"Error while performing the test: {e}")
         else:
