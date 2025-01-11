@@ -50,69 +50,69 @@ if uploaded_file:
         if testing_columns:
             st.write(f"### Selected Columns for Testing: {', '.join(testing_columns)}")
 
-            # Step 5: Test Önerileri
+            # Step 5: Test Önerileri ve Çoklu Seçim
             st.markdown("<h2 style='text-align: center; font-weight: bold;'>Step 5: Recommended Tests</h2>", unsafe_allow_html=True)
-            recommendations = []
+            recommendations = {}
 
             for col in testing_columns:
+                rec_list = []
                 if pd.api.types.is_numeric_dtype(data[col]):
                     unique_values = data[col].nunique()
                     if unique_values <= 10:
                         dependency = "Dependent" if data[col].duplicated().any() else "Independent"
                         if dependency == "Dependent":
-                            recommendations.append((col, "Wilcoxon Signed-Rank Test (dependent numerical groups)"))
+                            rec_list.append("Wilcoxon Signed-Rank Test (dependent numerical groups)")
                         else:
-                            recommendations.append((col, "Mann-Whitney U Test (independent numerical groups)"))
+                            rec_list.append("Mann-Whitney U Test (independent numerical groups)")
                     else:
-                        recommendations.append((col, "One-Way ANOVA (independent numerical groups)")
-                                              if unique_values > 2 else (col, "Independent T-Test"))
+                        rec_list.append("One-Way ANOVA (independent numerical groups)" if unique_values > 2 else "Independent T-Test")
 
                 else:
                     unique_values = data[col].nunique()
                     if unique_values == 2:
                         dependency = "Dependent" if data[col].duplicated().any() else "Independent"
                         if dependency == "Dependent":
-                            recommendations.append((col, "McNemar Test (dependent categorical data)"))
+                            rec_list.append("McNemar Test (dependent categorical data)")
                         else:
-                            recommendations.append((col, "Chi-Square Test (independent categorical data)"))
+                            rec_list.append("Chi-Square Test (independent categorical data)")
                     elif unique_values > 2:
-                        recommendations.append((col, "Chi-Square Test (independent categorical data with >2 categories)"))
+                        rec_list.append("Chi-Square Test (independent categorical data with >2 categories)")
 
-            if recommendations:
-                for col, test in recommendations:
-                    st.write(f"- **{col}:** {test}")
-            else:
-                st.write("No suitable tests found for the selected configuration.")
+                recommendations[col] = rec_list
+
+            for col, tests in recommendations.items():
+                st.write(f"- **{col}:**")
+                for test in tests:
+                    st.write(f"  - {test}")
 
             # Step 6: Test Gerçekleştirme
-            st.markdown("<h2 style='text-align: center; font-weight: bold;'>Step 6: Perform a Hypothesis Test</h2>", unsafe_allow_html=True)
-            selected_test_col = st.selectbox("Choose a column for testing", [col for col, _ in recommendations])
-            selected_test = st.selectbox("Choose a Hypothesis Test to Perform", [test for _, test in recommendations])
-
-            if st.button("Run Test"):
-                st.markdown(f"<h3 style='text-align: center;'>Performing: {selected_test} on {selected_test_col}</h3>", unsafe_allow_html=True)
-                try:
-                    if selected_test == "Wilcoxon Signed-Rank Test":
-                        col_data = data[selected_test_col].dropna()
-                        stat, p_val = wilcoxon(col_data[:-1], col_data[1:])
-                        st.write(f"Statistic: {stat}, P-Value: {p_val}")
-                    elif selected_test == "Mann-Whitney U Test":
-                        col_data = data[selected_test_col].dropna()
-                        group1 = col_data[:len(col_data)//2]
-                        group2 = col_data[len(col_data)//2:]
-                        stat, p_val = mannwhitneyu(group1, group2)
-                        st.write(f"Statistic: {stat}, P-Value: {p_val}")
-                    elif selected_test == "One-Way ANOVA":
-                        col_data = data[selected_test_col].dropna()
-                        groups = [col_data[:len(col_data)//3], col_data[len(col_data)//3:2*len(col_data)//3], col_data[2*len(col_data)//3:]]
-                        f_stat, p_val = f_oneway(*groups)
-                        st.write(f"F-Statistic: {f_stat}, P-Value: {p_val}")
-                    elif selected_test == "Chi-Square Test":
-                        contingency_table = pd.crosstab(data[selected_test_col], data[selected_test_col])
-                        chi2, p_val, _, _ = chi2_contingency(contingency_table)
-                        st.write(f"Chi2 Statistic: {chi2}, P-Value: {p_val}")
-                except Exception as e:
-                    st.write(f"Error while performing the test: {e}")
+            st.markdown("<h2 style='text-align: center; font-weight: bold;'>Step 6: Perform Hypothesis Tests</h2>", unsafe_allow_html=True)
+            for col, tests in recommendations.items():
+                st.write(f"### Performing Tests for {col}")
+                for test in tests:
+                    if st.button(f"Run {test} for {col}"):
+                        try:
+                            if test == "Wilcoxon Signed-Rank Test (dependent numerical groups)":
+                                col_data = data[col].dropna()
+                                stat, p_val = wilcoxon(col_data[:-1], col_data[1:])
+                                st.write(f"Statistic: {stat}, P-Value: {p_val}")
+                            elif test == "Mann-Whitney U Test (independent numerical groups)":
+                                col_data = data[col].dropna()
+                                group1 = col_data[:len(col_data)//2]
+                                group2 = col_data[len(col_data)//2:]
+                                stat, p_val = mannwhitneyu(group1, group2)
+                                st.write(f"Statistic: {stat}, P-Value: {p_val}")
+                            elif test == "One-Way ANOVA (independent numerical groups)":
+                                col_data = data[col].dropna()
+                                groups = [col_data[:len(col_data)//3], col_data[len(col_data)//3:2*len(col_data)//3], col_data[2*len(col_data)//3:]]
+                                f_stat, p_val = f_oneway(*groups)
+                                st.write(f"F-Statistic: {f_stat}, P-Value: {p_val}")
+                            elif test == "Chi-Square Test (independent categorical data)":
+                                contingency_table = pd.crosstab(data[col], data[col])
+                                chi2, p_val, _, _ = chi2_contingency(contingency_table)
+                                st.write(f"Chi2 Statistic: {chi2}, P-Value: {p_val}")
+                        except Exception as e:
+                            st.write(f"Error while performing the test: {e}")
         else:
             st.write("No columns selected for testing.")
     else:
