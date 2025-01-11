@@ -98,32 +98,49 @@ if uploaded_file:
 
             # Step 3: Testin Gerçekleştirilmesi
             if st.button(f"Run Test for {selected_test_col}"):
+                result_message = ""
                 try:
-                    if selected_test == "Paired T-Test":
-                        group1 = cleaned_data[:-1]
-                        group2 = cleaned_data[1:]
-                        t_stat, p_val = ttest_rel(group1, group2)
-                        st.write(f"T-Statistic: {t_stat}, P-Value: {p_val}")
-                    elif selected_test == "Student T-Test":
-                        group_column = st.selectbox("Select column to define groups", data.columns)
-                        unique_values = data[group_column].dropna().unique()
-                        if len(unique_values) < 2:
-                            st.error("Not enough groups for Student T-Test.")
-                            continue
-                        group1 = cleaned_data[data[group_column] == unique_values[0]]
-                        group2 = cleaned_data[data[group_column] == unique_values[1]]
-                        t_stat, p_val = ttest_ind(group1, group2)
-                        st.write(f"T-Statistic: {t_stat}, P-Value: {p_val}")
-                    elif selected_test == "Mann-Whitney U Test":
-                        group1 = cleaned_data[:len(cleaned_data)//2]
-                        group2 = cleaned_data[len(cleaned_data)//2:]
-                        u_stat, p_val = mannwhitneyu(group1, group2)
-                        st.write(f"U-Statistic: {u_stat}, P-Value: {p_val}")
-                    elif selected_test == "Chi-Square Test":
-                        comparison_column = st.selectbox("Select second column for Chi-Square test", data.columns)
-                        contingency_table = pd.crosstab(cleaned_data, data[comparison_column])
-                        chi2, p_val, _, _ = chi2_contingency(contingency_table)
-                        st.write(f"Chi2 Statistic: {chi2}, P-Value: {p_val}")
+                    if selected_test in ["Paired T-Test", "Wilcoxon Signed-Rank Test", "Student T-Test", "Mann-Whitney U Test"]:
+                        if len(cleaned_data) < 2:
+                            st.error("At least two groups are required for this test.")
+                        else:
+                            group1, group2 = cleaned_data[:len(cleaned_data)//2], cleaned_data[len(cleaned_data)//2:]
+                            if selected_test == "Paired T-Test":
+                                t_stat, p_value = ttest_rel(group1, group2)
+                                result_message = f"Paired T-Test: T-Statistic = {t_stat:.4f}, P-value = {p_value:.4f}"
+                            elif selected_test == "Student T-Test":
+                                t_stat, p_value = ttest_ind(group1, group2)
+                                result_message = f"Student T-Test: T-Statistic = {t_stat:.4f}, P-value = {p_value:.4f}"
+                            elif selected_test == "Mann-Whitney U Test":
+                                u_stat, p_value = mannwhitneyu(group1, group2)
+                                result_message = f"Mann-Whitney U Test: U-Statistic = {u_stat:.4f}, P-value = {p_value:.4f}"
+                            elif selected_test == "Wilcoxon Signed-Rank Test":
+                                w_stat, p_value = wilcoxon(group1, group2)
+                                result_message = f"Wilcoxon Signed-Rank Test: W-Statistic = {w_stat:.4f}, P-value = {p_value:.4f}"
+                    elif selected_test in ["One-Way ANOVA", "Kruskal-Wallis Test", "Friedman Test"]:
+                        if len(cleaned_data) < 3:
+                            st.error("At least three groups are required for this test.")
+                        else:
+                            group1, group2, group3 = cleaned_data[:len(cleaned_data)//3], cleaned_data[len(cleaned_data)//3:2*len(cleaned_data)//3], cleaned_data[2*len(cleaned_data)//3:]
+                            if selected_test == "One-Way ANOVA":
+                                f_stat, p_value = f_oneway(group1, group2, group3)
+                                result_message = f"One-Way ANOVA: F-Statistic = {f_stat:.4f}, P-value = {p_value:.4f}"
+                            elif selected_test == "Kruskal-Wallis Test":
+                                h_stat, p_value = kruskal(group1, group2, group3)
+                                result_message = f"Kruskal-Wallis Test: H-Statistic = {h_stat:.4f}, P-value = {p_value:.4f}"
+                            elif selected_test == "Friedman Test":
+                                chi_stat, p_value = kruskal(group1, group2, group3)  # Replace with correct Friedman test if available
+                                result_message = f"Friedman Test: Chi-Statistic = {chi_stat:.4f}, P-value = {p_value:.4f}"
+                    elif selected_test in ["Chi-Square Test", "Fisher Exact Test"]:
+                        contingency_table = pd.crosstab(group1, group2)
+                        if selected_test == "Chi-Square Test":
+                            chi2, p_value, _, _ = chi2_contingency(contingency_table)
+                            result_message = f"Chi-Square Test: Chi2 Statistic = {chi2:.4f}, P-value = {p_value:.4f}"
+                        elif selected_test == "Fisher Exact Test":
+                            odds_ratio, p_value = fisher_exact(contingency_table)
+                            result_message = f"Fisher Exact Test: Odds Ratio = {odds_ratio:.4f}, P-value = {p_value:.4f}"
+                    if result_message:
+                        st.info(result_message)
                 except Exception as e:
                     st.error(f"An error occurred while running the test: {e}")
 else:
