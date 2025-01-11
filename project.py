@@ -26,13 +26,9 @@ if uploaded_file:
         st.write("### Data for Selected Columns")
         st.dataframe(data[selected_columns].reset_index(drop=True))
 
-        # Hipotez testi için sütun seçimi
-        st.write("### Select Columns for Hypothesis Testing")
-        testing_columns = []
-
-        for col in selected_columns:
-            if st.checkbox(f"Include {col}", key=f"test_col_{col}"):
-                testing_columns.append(col)
+        # Hipotez testi için sütun seçimi (tek kısımda yapılacak)
+        st.write("### Select Testing Categories")
+        testing_columns = st.multiselect("Select columns for hypothesis testing", selected_columns)
 
         if testing_columns:
             st.write(f"### Selected Columns for Testing: {', '.join(testing_columns)}")
