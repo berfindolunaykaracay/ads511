@@ -66,3 +66,5 @@ if uploaded_file:
                 st.error("The selected categorical column must have at least two groups.")
         else:
             st.error("Please select a categorical column and a numerical column correctly.")
+    else:
+        st.write("No columns selected.")
