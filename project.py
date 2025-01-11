@@ -75,33 +75,48 @@ if uploaded_file:
             selected_test = st.selectbox("Choose a Hypothesis Test to Perform", [test for _, test in recommendations])
 
             if st.button("Run Test"):
-                st.write(f"Performing: {selected_test} on {selected_test_col}")
+                st.markdown(f"<h3 style='text-align: center;'>Performing: {selected_test} on {selected_test_col}</h3>", unsafe_allow_html=True)
                 try:
                     if selected_test == "Paired T-Test":
                         col_data = data[selected_test_col].dropna()
-                        t_stat, p_val = ttest_rel(col_data[:-1], col_data[1:])
-                        st.write(f"T-Statistic: {t_stat}, P-Value: {p_val}")
+                        if len(col_data) < 2:
+                            st.error("Not enough data for Paired T-Test. At least 2 observations are required.")
+                        else:
+                            t_stat, p_val = ttest_rel(col_data[:-1], col_data[1:])
+                            st.success(f"T-Statistic: {t_stat:.4f}, P-Value: {p_val:.4f}")
                     elif selected_test == "Independent T-Test":
                         col_data = data[selected_test_col].dropna()
-                        group1 = col_data[:len(col_data)//2]
-                        group2 = col_data[len(col_data)//2:]
-                        t_stat, p_val = ttest_ind(group1, group2)
-                        st.write(f"T-Statistic: {t_stat}, P-Value: {p_val}")
+                        if len(col_data) < 2:
+                            st.error("Not enough data for Independent T-Test. At least 2 groups are required.")
+                        else:
+                            group1 = col_data[:len(col_data)//2]
+                            group2 = col_data[len(col_data)//2:]
+                            t_stat, p_val = ttest_ind(group1, group2)
+                            st.success(f"T-Statistic: {t_stat:.4f}, P-Value: {p_val:.4f}")
                     elif selected_test == "One-Way ANOVA":
                         col_data = data[selected_test_col].dropna()
-                        groups = [col_data[:len(col_data)//3], col_data[len(col_data)//3:2*len(col_data)//3], col_data[2*len(col_data)//3:]]
-                        f_stat, p_val = f_oneway(*groups)
-                        st.write(f"F-Statistic: {f_stat}, P-Value: {p_val}")
+                        if len(col_data) < 3:
+                            st.error("Not enough data for One-Way ANOVA. At least 3 groups are required.")
+                        else:
+                            groups = [col_data[:len(col_data)//3], col_data[len(col_data)//3:2*len(col_data)//3], col_data[2*len(col_data)//3:]]
+                            f_stat, p_val = f_oneway(*groups)
+                            st.success(f"F-Statistic: {f_stat:.4f}, P-Value: {p_val:.4f}")
                     elif selected_test == "Chi-Square Test":
                         contingency_table = pd.crosstab(data[selected_test_col], data[selected_test_col])
-                        chi2, p_val, _, _ = chi2_contingency(contingency_table)
-                        st.write(f"Chi2 Statistic: {chi2}, P-Value: {p_val}")
+                        if contingency_table.shape[0] < 2 or contingency_table.shape[1] < 2:
+                            st.error("Not enough data for Chi-Square Test. Contingency table must have at least 2 rows and 2 columns.")
+                        else:
+                            chi2, p_val, _, _ = chi2_contingency(contingency_table)
+                            st.success(f"Chi2 Statistic: {chi2:.4f}, P-Value: {p_val:.4f}")
                     elif selected_test == "McNemar Test":
                         contingency_table = pd.crosstab(data[selected_test_col], data[selected_test_col])
-                        _, p_val = proportions_ztest(contingency_table.iloc[0], contingency_table.iloc[1])
-                        st.write(f"P-Value: {p_val}")
+                        if contingency_table.shape[0] < 2 or contingency_table.shape[1] < 2:
+                            st.error("Not enough data for McNemar Test. Contingency table must have at least 2 rows and 2 columns.")
+                        else:
+                            _, p_val = proportions_ztest(contingency_table.iloc[0], contingency_table.iloc[1])
+                            st.success(f"P-Value: {p_val:.4f}")
                 except Exception as e:
-                    st.write(f"Error while performing the test: {e}")
+                    st.error(f"Error while performing the test: {e}")
         else:
             st.write("No columns selected for testing.")
     else:
