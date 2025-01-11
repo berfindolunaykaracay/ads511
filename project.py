@@ -26,7 +26,7 @@ if uploaded_file:
     column_details = pd.DataFrame({
         "Column Name": data.columns,
         "Data Type": data.dtypes,
-        "Number of Unique Value": [data[col].nunique() for col in data.columns],
+        "Number of Unique Values": [data[col].nunique() for col in data.columns],
         "Number of Missing Values": [data[col].isnull().sum() for col in data.columns]
     })
     st.dataframe(column_details)
@@ -57,21 +57,22 @@ if uploaded_file:
                 column_types[selected_test_col] = "Numerical"
                 all_groups.append(cleaned_data.tolist())
 
-            elif pd.api.types.is_categorical_dtype(cleaned_data):
+            elif pd.api.types.is_categorical_dtype(cleaned_data) or isinstance(cleaned_data.iloc[0], str):
                 st.write(f"**Column '{selected_test_col}' is categorical.**")
                 column_types[selected_test_col] = "Categorical"
                 all_groups.append(cleaned_data.tolist())
 
             else:
-                st.write(f"**Column '{selected_test_col}' contains unsupported data for hypothesis testing.")
+                st.error(f"**Column '{selected_test_col}' contains unsupported data type. Please select columns with either numeric or categorical data.**")
+                st.stop()
 
     if not all_groups:
         st.warning("No valid data provided.")
         st.stop()
 
-    # Step 3: Otomatik Veri Türü Seçimi
+    # Step 3: Veri Türü Kontrolü
     if len(set(column_types.values())) > 1:
-        st.warning("Selected columns have mixed data types. Please adjust your selections.")
+        st.warning("Selected columns have mixed data types. Please select columns with either all numeric or all categorical data.")
         st.stop()
 
     data_type = list(column_types.values())[0]
