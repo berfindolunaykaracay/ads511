@@ -22,18 +22,11 @@ if uploaded_file:
     st.write("### Full Dataset")
     st.dataframe(data)
 
-    # Kategoriye göre veri gösterimi
-    st.write("### Data by Categories")
-    categorical_columns = data.select_dtypes(include=['object', 'category']).columns
-
-    if not categorical_columns.empty:
-        for category_column in categorical_columns:
-            st.write(f"#### Category: {category_column}")
-            unique_values = data[category_column].dropna().unique()
-            st.write(f"Unique Values: {', '.join(map(str, unique_values))}")
-            st.dataframe(data[[category_column]].drop_duplicates().reset_index(drop=True))
-    else:
-        st.write("No categorical columns available.")
+    # İlk 9 sütun için veri gösterimi
+    st.write("### Data by First 9 Columns")
+    for column in data.columns[:9]:
+        st.write(f"#### Column: {column}")
+        st.dataframe(data[[column]].reset_index(drop=True))
 
     # Görselleştirme seçenekleri
     st.markdown("<h2 style='text-align: center;'>Data Visualization</h2>", unsafe_allow_html=True)
