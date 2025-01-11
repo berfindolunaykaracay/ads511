@@ -38,6 +38,15 @@ def run_levene_test(group1, group2):
     stat, p = levene(group1, group2)
     return stat, p
 
+def check_outliers(data):
+    q1 = np.percentile(data, 25)
+    q3 = np.percentile(data, 75)
+    iqr = q3 - q1
+    lower_bound = q1 - 1.5 * iqr
+    upper_bound = q3 + 1.5 * iqr
+    outliers = data[(data < lower_bound) | (data > upper_bound)]
+    return len(outliers), outliers
+
 def display_test_results(test_name, stat, p_value):
     st.markdown(f"### {test_name} Results")
     st.write(f"- Test Statistic: {stat:.4f}")
@@ -86,26 +95,72 @@ if uploaded_file:
             if pd.api.types.is_numeric_dtype(cleaned_data):
                 st.markdown(f"<h3 style='text-align: center;'>{column} Column Analysis (Numerical)</h3>", unsafe_allow_html=True)
 
+                # Step 3: Define Hypothesis
+                st.subheader(f"Define Hypotheses for {column}")
+                st.write("**Null Hypothesis (H0):** No significant difference.")
+                st.write("**Alternative Hypothesis (H1):** There is a significant difference.")
+
+                # Step 4: Assumption Check
+                st.subheader(f"Assumption Check for {column}")
+
                 # Normality Test
                 if st.checkbox(f"Perform Normality Test (Shapiro-Wilk) for {column}"):
                     stat, p_value = run_shapiro_test(cleaned_data)
                     display_test_results("Shapiro-Wilk Test", stat, p_value)
 
-                    # Histogram
-                    fig, ax = plt.subplots()
-                    ax.hist(cleaned_data, bins=10, color='blue', edgecolor='black')
-                    st.pyplot(fig)
-
-                # Variance Homogeneity Test (Levene)
+                # Homogeneity of Variance
                 if len(cleaned_data) >= 2 and st.checkbox(f"Perform Variance Homogeneity Test (Levene) for {column}"):
                     group1 = cleaned_data[:len(cleaned_data)//2]
                     group2 = cleaned_data[len(cleaned_data)//2:]
                     stat, p_value = run_levene_test(group1, group2)
                     display_test_results("Levene Test", stat, p_value)
 
+                # Outlier Check
+                if st.checkbox(f"Check for Outliers in {column}"):
+                    outlier_count, outliers = check_outliers(cleaned_data)
+                    st.write(f"Number of Outliers: {outlier_count}")
+                    if outlier_count > 0:
+                        st.write("Outliers:")
+                        st.write(outliers)
+
+                # Independent and Identically Distributed (IID) Check
+                st.write("**Note:** IID checks need external validation based on domain knowledge.")
+
+                # Step 5: Decide Test Type
+                st.subheader(f"Test Type Decision for {column}")
+                parametric_conditions = st.checkbox("All Assumptions for Parametric Tests are Met")
+
+                if parametric_conditions:
+                    test_type = st.radio("Select a Parametric Test", ["Independent T-Test", "Paired T-Test"])
+                else:
+                    test_type = st.radio("Select a Non-Parametric Test", ["Mann-Whitney U Test", "Wilcoxon Signed-Rank Test"])
+
+                # Step 6: Evaluation
+                if st.button(f"Run {test_type} for {column}"):
+                    if test_type == "Independent T-Test":
+                        stat, p_value = ttest_ind(group1, group2)
+                        display_test_results("Independent T-Test", stat, p_value)
+                    elif test_type == "Paired T-Test":
+                        st.error("Paired T-Test requires paired data.")
+                    elif test_type == "Mann-Whitney U Test":
+                        stat, p_value = mannwhitneyu(group1, group2)
+                        display_test_results("Mann-Whitney U Test", stat, p_value)
+                    elif test_type == "Wilcoxon Signed-Rank Test":
+                        stat, p_value = wilcoxon(group1, group2)
+                        display_test_results("Wilcoxon Signed-Rank Test", stat, p_value)
+
             elif pd.api.types.is_categorical_dtype(cleaned_data) or isinstance(cleaned_data.iloc[0], str):
                 st.markdown(f"<h3 style='text-align: center;'>{column} Column Analysis (Categorical)</h3>", unsafe_allow_html=True)
-                st.warning("Categorical data analysis is currently limited.")
+                st.subheader(f"Non-Parametric Analysis for {column}")
+                st.write("Categorical data automatically uses non-parametric tests.")
+
+                test_type = st.radio("Select a Test", ["Chi-Square Test", "Fisher's Exact Test"])
+
+                if st.button(f"Run {test_type} for {column}"):
+                    if test_type == "Chi-Square Test":
+                        st.error("Chi-Square Test requires contingency tables.")
+                    elif test_type == "Fisher's Exact Test":
+                        st.error("Fisher's Exact Test requires contingency tables.")
 
             else:
                 st.error(f"'{column}' column contains unsupported data type. Please select columns with numerical or categorical data.")
