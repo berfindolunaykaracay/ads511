@@ -13,7 +13,27 @@ uploaded_file = st.file_uploader("", type=["csv"])
 if uploaded_file:
     data = pd.read_csv(uploaded_file)
     st.markdown("<h2 style='text-align: center;'>Dataset Preview</h2>", unsafe_allow_html=True)
-    st.write(data.head())
+
+    # Dataset boyutu
+    st.write(f"**Number of rows:** {data.shape[0]}")
+    st.write(f"**Number of columns:** {data.shape[1]}")
+
+    # Sütun isimleri ve veri tipleri
+    st.write("### Column Information")
+    st.dataframe(data.dtypes.rename("Data Type"))
+
+    # Eksik değerlerin özeti
+    st.write("### Missing Data Summary")
+    missing_data = data.isnull().sum()
+    missing_data = missing_data[missing_data > 0]
+    if not missing_data.empty:
+        st.dataframe(missing_data.rename("Missing Values"))
+    else:
+        st.write("No missing data detected.")
+
+    # İlk birkaç satır
+    st.write("### First 5 Rows of the Dataset")
+    st.dataframe(data.head())
 
     # Görselleştirme seçenekleri
     st.markdown("<h2 style='text-align: center;'>Data Visualization</h2>", unsafe_allow_html=True)
