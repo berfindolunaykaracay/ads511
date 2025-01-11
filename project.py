@@ -39,7 +39,8 @@ if uploaded_file:
         elif len(selected_columns) == 2:
             st.write(f"### Relationship between {selected_columns[0]} and {selected_columns[1]}")
             fig, ax = plt.subplots()
-            data.boxplot(column=selected_columns[0], by=selected_columns[1], ax=ax)
+            data[[selected_columns[0], selected_columns[1]]].dropna().groupby(selected_columns[1]).boxplot(
+                column=selected_columns[0], ax=ax, subplots=False)
             plt.suptitle("")
             st.pyplot(fig)
 
