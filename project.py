@@ -31,20 +31,26 @@ if uploaded_file:
         # Step 3: Veri Görselleştirme
         st.markdown("<h2 style='text-align: center; font-weight: bold;'>Step 3: Data Visualization</h2>", unsafe_allow_html=True)
         if len(selected_columns) == 1:
-            st.write(f"### Distribution of {selected_columns[0]}")
-            fig, ax = plt.subplots()
-            data[selected_columns[0]].plot(kind='hist', ax=ax, bins=20, alpha=0.7)
-            ax.set_title(f"Histogram of {selected_columns[0]}")
-            st.pyplot(fig)
+            if pd.api.types.is_numeric_dtype(data[selected_columns[0]]):
+                st.write(f"### Distribution of {selected_columns[0]}")
+                fig, ax = plt.subplots()
+                data[selected_columns[0]].dropna().plot(kind='hist', ax=ax, bins=20, alpha=0.7)
+                ax.set_title(f"Histogram of {selected_columns[0]}")
+                st.pyplot(fig)
+            else:
+                st.write(f"Column {selected_columns[0]} is not numeric and cannot be visualized as a histogram.")
         elif len(selected_columns) == 2:
-            st.write(f"### Relationship between {selected_columns[0]} and {selected_columns[1]}")
-            fig, ax = plt.subplots()
-            filtered_data = data[[selected_columns[0], selected_columns[1]]].dropna()
-            grouped_data = filtered_data.groupby(selected_columns[1])[selected_columns[0]].apply(list)
-            ax.boxplot(grouped_data)
-            ax.set_xticklabels(grouped_data.index, rotation=45)
-            ax.set_title(f"Boxplot of {selected_columns[0]} by {selected_columns[1]}")
-            st.pyplot(fig)
+            if pd.api.types.is_numeric_dtype(data[selected_columns[0]]) and pd.api.types.is_categorical_dtype(data[selected_columns[1]]):
+                st.write(f"### Relationship between {selected_columns[0]} and {selected_columns[1]}")
+                fig, ax = plt.subplots()
+                filtered_data = data[[selected_columns[0], selected_columns[1]]].dropna()
+                grouped_data = filtered_data.groupby(selected_columns[1])[selected_columns[0]].apply(list)
+                ax.boxplot(grouped_data)
+                ax.set_xticklabels(grouped_data.index, rotation=45)
+                ax.set_title(f"Boxplot of {selected_columns[0]} by {selected_columns[1]}")
+                st.pyplot(fig)
+            else:
+                st.write(f"Cannot create a boxplot as {selected_columns[0]} must be numeric and {selected_columns[1]} must be categorical.")
 
         # Step 4: Hipotez testi için sütun seçimi
         st.markdown("<h2 style='text-align: center; font-weight: bold;'>Step 4: Select Columns for Hypothesis Testing</h2>", unsafe_allow_html=True)
