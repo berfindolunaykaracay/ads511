@@ -7,6 +7,7 @@ st.markdown("<h1 style='text-align: center; font-weight: bold;'>Hypothesis Testi
 # CSV Dosyası Yükleme
 st.markdown("<h2 style='text-align: center; font-weight: bold;'>Upload a CSV file</h2>", unsafe_allow_html=True)
 uploaded_file = st.file_uploader("", type=["csv"])
+
 if uploaded_file:
     data = pd.read_csv(uploaded_file)
     st.markdown("<h2 style='text-align: center; font-weight: bold;'>Dataset Preview</h2>", unsafe_allow_html=True)
@@ -17,58 +18,50 @@ if uploaded_file:
     st.write("### Full Dataset")
     st.dataframe(data)
 
-    # İlk 9 sütun seçimi
+    # Sütun Seçimi
     st.write("### Select Columns")
-    first_9_columns = data.columns[:9]
-    selected_columns = st.multiselect("Select columns", first_9_columns)
+    selected_columns = st.multiselect("Select columns", data.columns.tolist())
 
     if selected_columns:
-        st.write("### Data for Selected Columns")
+        st.write("### Selected Columns Data")
         st.dataframe(data[selected_columns].reset_index(drop=True))
 
-        # Hipotez testi için sütun seçimi (tek kısımda yapılacak)
-        st.write("### Select Testing Categories")
-        testing_columns = st.multiselect("Select columns for hypothesis testing", selected_columns)
+        # Hipotez testi için sütun seçimi
+        st.write("### Select Columns for Hypothesis Testing")
+        testing_columns = st.multiselect("Select columns for testing", selected_columns)
 
         if testing_columns:
             st.write(f"### Selected Columns for Testing: {', '.join(testing_columns)}")
 
-            # Veri türü otomatik tespiti ve uygun testlerin önerilmesi
+            # Test önerileri
             st.write("### Recommended Tests")
             recommendations = []
 
             for col in testing_columns:
                 if pd.api.types.is_numeric_dtype(data[col]):
-                    # Sayısal veri için test önerileri
-                    group_count = st.radio(f"How many groups does {col} have?", ["2 Groups", ">2 Groups"], key=f"group_{col}")
-                    dependency = st.radio(f"Are the groups dependent or independent?", ["Dependent", "Independent"], key=f"dep_{col}")
-
-                    if group_count == "2 Groups":
+                    unique_values = data[col].nunique()
+                    if unique_values <= 10:  # Küçük grup sayısı için kontrol
+                        dependency = "Dependent" if data[col].duplicated().any() else "Independent"
                         if dependency == "Dependent":
                             recommendations.append((col, "Paired T-Test (tests dependent numerical groups)"))
                         else:
                             recommendations.append((col, "Independent T-Test (tests independent numerical groups)"))
                     else:
-                        if dependency == "Dependent":
-                            recommendations.append((col, "Repeated Measures ANOVA (tests dependent numerical groups)"))
-                        else:
-                            recommendations.append((col, "One-Way ANOVA (tests independent numerical groups)"))
+                        dependency = "Independent"  # Çok fazla grup olduğunda bağımsız kabul edilir
+                        recommendations.append((col, "One-Way ANOVA (tests independent numerical groups)")
+                                              if unique_values > 2 else (col, "Independent T-Test"))
 
                 else:
-                    # Kategorik veri için test önerileri
-                    group_count = st.radio(f"How many categories does {col} have?", ["2 Categories", ">2 Categories"], key=f"cat_group_{col}")
-                    dependency = st.radio(f"Are the categories dependent or independent?", ["Dependent", "Independent"], key=f"cat_dep_{col}")
-
-                    if group_count == "2 Categories":
+                    unique_values = data[col].nunique()
+                    if unique_values == 2:
+                        dependency = "Dependent" if data[col].duplicated().any() else "Independent"
                         if dependency == "Dependent":
                             recommendations.append((col, "McNemar Test (tests dependent categorical data)"))
                         else:
                             recommendations.append((col, "Chi-Square Test (tests independent categorical data)"))
-                    else:
-                        if dependency == "Dependent":
-                            recommendations.append((col, "Marginal Homogeneity Test (tests dependent categorical data with >2 categories)"))
-                        else:
-                            recommendations.append((col, "Chi-Square Test (tests independent categorical data with >2 categories)"))
+                    elif unique_values > 2:
+                        dependency = "Independent"  # Çok kategorili bağımsız kabul edilir
+                        recommendations.append((col, "Chi-Square Test (tests independent categorical data with >2 categories)"))
 
             if recommendations:
                 for col, test in recommendations:
