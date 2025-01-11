@@ -26,7 +26,7 @@ if uploaded_file:
     column_details = pd.DataFrame({
         "Column Name": data.columns,
         "Data Type": data.dtypes,
-        "Number of Unique Values": [data[col].nunique() for col in data.columns],
+        "Number of Unique Value": [data[col].nunique() for col in data.columns],
         "Number of Missing Values": [data[col].isnull().sum() for col in data.columns]
     })
     st.dataframe(column_details)
