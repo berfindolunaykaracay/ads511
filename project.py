@@ -69,8 +69,11 @@ if uploaded_file:
 
             # Step 5: Test Gerçekleştirme
             st.markdown("<h2 style='text-align: center; font-weight: bold;'>Step 5: Perform a Hypothesis Test</h2>", unsafe_allow_html=True)
-            selected_test_col = st.selectbox("Choose a column for testing", [col for col, _ in recommendations])
-            selected_test = st.selectbox("Choose a Hypothesis Test to Perform", [test for _, test in recommendations])
+            unique_test_columns = list(set([col for col, _ in recommendations]))
+            selected_test_col = st.selectbox("Choose a column for testing", unique_test_columns)
+
+            available_tests = list(set([test for col, test in recommendations if col == selected_test_col]))
+            selected_test = st.selectbox("Choose a Hypothesis Test to Perform", available_tests)
 
             if st.button("Run Test"):
                 st.markdown(f"<h3 style='text-align: center;'>Performing: {selected_test} on {selected_test_col}</h3>", unsafe_allow_html=True)
