@@ -51,16 +51,61 @@ if uploaded_file:
         st.write(f"### _Selected Columns for Testing:_ {', '.join([f'*{col}*' for col in testing_columns])}")
 
         # Data type seçimi sadece sütunlar seçildiyse
-        st.write("### _Select Data Type for Testing Columns_")
-        data_type_choices = {}
+        st.write("### _Select Data Type and Group Information for Testing Columns_")
+        recommendations = []
+
         for col in testing_columns:
-            data_type_choices[col] = st.selectbox(
+            data_type = st.selectbox(
                 f"Select data type for {col}", ["Numerical", "Categorical"], key=f"type_{col}"
             )
 
-        st.write("### _Selected Data Types:_")
-        for col, dtype in data_type_choices.items():
-            st.write(f"_{col}: {dtype}_")
+            if data_type == "Numerical":
+                group_count = st.radio(
+                    f"How many groups does {col} have?", ["2 Groups", ">2 Groups"], key=f"group_{col}"
+                )
+                dependency = st.radio(
+                    f"Are the groups dependent or independent for {col}?", ["Dependent", "Independent"], key=f"dep_{col}"
+                )
+
+                if group_count == "2 Groups":
+                    if dependency == "Dependent":
+                        recommendations.append((col, "Paired T-Test"))
+                    else:
+                        recommendations.append((col, "Independent T-Test"))
+                else:
+                    if dependency == "Dependent":
+                        recommendations.append((col, "Repeated Measures ANOVA"))
+                    else:
+                        recommendations.append((col, "One-Way ANOVA"))
+
+            elif data_type == "Categorical":
+                group_count = st.radio(
+                    f"How many categories does {col} have?", ["2 Categories", ">2 Categories"], key=f"cat_group_{col}"
+                )
+                if group_count == "2 Categories":
+                    dependency = st.radio(
+                        f"Are the categories dependent or independent for {col}?", ["Dependent", "Independent"], key=f"cat_dep_{col}"
+                    )
+                    if dependency == "Dependent":
+                        recommendations.append((col, "McNemar Test"))
+                    else:
+                        recommendations.append((col, "Chi-Square Test"))
+                else:
+                    dependency = st.radio(
+                        f"Are the categories dependent or independent for {col}?", ["Dependent", "Independent"], key=f"cat_dep_{col}"
+                    )
+                    if dependency == "Dependent":
+                        recommendations.append((col, "Marginal Homogeneity Test"))
+                    else:
+                        recommendations.append((col, "Chi-Square Test"))
+
+        # Test önerilerini göster
+        st.write("### _Recommended Tests:_")
+        if recommendations:
+            for col, test in recommendations:
+                st.write(f"*{col}: {test}*")
+        else:
+            st.write("No suitable tests found for the selected configuration.")
 
     else:
         st.write("No columns selected for testing.")
