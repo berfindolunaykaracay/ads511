@@ -27,7 +27,7 @@ if uploaded_file:
     selected_columns = st.multiselect("Select columns", first_9_columns)
 
     if selected_columns:
-        st.write(f"### **Data for Selected Columns:** {', '.join([f'**{col}**' for col in selected_columns])}")
+        st.write(f"### **Data for Selected Columns:** {', '.join([f'*{col}*' for col in selected_columns])}")
         st.dataframe(data[selected_columns].reset_index(drop=True))
     else:
         st.write("No columns selected.")
@@ -48,6 +48,6 @@ if uploaded_file:
                     testing_columns.append(col_name)
 
     if testing_columns:
-        st.write(f"### **Selected Columns for Testing:** {', '.join([f'**{col}**' for col in testing_columns])}")
+        st.write(f"### **Selected Columns for Testing:** {', '.join([f'*{col}*' for col in testing_columns])}")
     else:
         st.write("No columns selected for testing.")
