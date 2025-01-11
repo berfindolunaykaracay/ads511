@@ -40,6 +40,8 @@ if uploaded_file:
     selected_columns = st.multiselect("Select columns for hypothesis testing", data.columns.tolist())
 
     all_groups = []
+    column_types = {}
+
     if selected_columns:
         for selected_test_col in selected_columns:
             st.markdown(f"<h3 style='text-align: center;'>Selected Column: {selected_test_col}</h3>", unsafe_allow_html=True)
@@ -52,33 +54,32 @@ if uploaded_file:
             # Veri Türü Tespiti
             if pd.api.types.is_numeric_dtype(cleaned_data):
                 st.write(f"**Column '{selected_test_col}' is numeric.**")
+                column_types[selected_test_col] = "Numerical"
                 all_groups.append(cleaned_data.tolist())
 
             elif pd.api.types.is_categorical_dtype(cleaned_data):
                 st.write(f"**Column '{selected_test_col}' is categorical.**")
+                column_types[selected_test_col] = "Categorical"
                 all_groups.append(cleaned_data.tolist())
 
             else:
-                st.write(f"**Column '{selected_test_col}' contains text data, which is not suitable for hypothesis testing.")
+                st.write(f"**Column '{selected_test_col}' contains unsupported data for hypothesis testing.")
 
     if not all_groups:
         st.warning("No valid data provided.")
         st.stop()
 
-    # Step 2.5: Veri Türü Seçimi
-    data_type = st.radio(
-        "What is your data type?",
-        options=["Select", "Numerical Data", "Categorical Data"],
-        index=0
-    )
-
-    if data_type == "Select":
-        st.warning("Please select your data type to proceed.")
+    # Step 3: Otomatik Veri Türü Seçimi
+    if len(set(column_types.values())) > 1:
+        st.warning("Selected columns have mixed data types. Please adjust your selections.")
         st.stop()
 
-    # Step 3: Assumption Checks (Numerical Data)
-    if data_type == "Numerical Data":
-        st.header("Step 3: Assumption Check")
+    data_type = list(column_types.values())[0]
+    st.info(f"Detected data type: {data_type}")
+
+    # Step 4: Assumption Checks (Numerical Data)
+    if data_type == "Numerical":
+        st.header("Step 4: Assumption Check")
         st.write("Performing Normality and Variance Homogeneity Tests")
 
         results = []
@@ -108,10 +109,10 @@ if uploaded_file:
             st.info("Your data is non-parametric data")
             parametric = False
 
-    # Step 4: Hypothesis Testing
-    st.header("Step 4: Select and Perform a Hypothesis Test")
+    # Step 5: Hypothesis Testing
+    st.header("Step 5: Select and Perform a Hypothesis Test")
 
-    if data_type == "Numerical Data":
+    if data_type == "Numerical":
         if parametric:
             methods = [
                 "t_test_independent", "dependent_ttest", "repeated_measure_anova", "oneway_anova"
