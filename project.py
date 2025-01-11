@@ -22,20 +22,18 @@ if uploaded_file:
     st.write("### Full Dataset")
     st.dataframe(data)
 
-    # Kategoriye göre veri filtreleme
-    st.write("### Filter Data by Categories")
+    # Kategoriye göre veri gösterimi
+    st.write("### Data by Categories")
     categorical_columns = data.select_dtypes(include=['object', 'category']).columns
 
     if not categorical_columns.empty:
-        category_column = st.selectbox("Select a categorical column", categorical_columns)
-        unique_values = data[category_column].dropna().unique()
-        selected_value = st.selectbox("Select a value", unique_values)
-
-        filtered_data = data[data[category_column] == selected_value]
-        st.write(f"### Filtered Data for {category_column} = {selected_value}")
-        st.dataframe(filtered_data)
+        for category_column in categorical_columns:
+            st.write(f"#### Category: {category_column}")
+            unique_values = data[category_column].dropna().unique()
+            st.write(f"Unique Values: {', '.join(map(str, unique_values))}")
+            st.dataframe(data[[category_column]].drop_duplicates().reset_index(drop=True))
     else:
-        st.write("No categorical columns available for filtering.")
+        st.write("No categorical columns available.")
 
     # Görselleştirme seçenekleri
     st.markdown("<h2 style='text-align: center;'>Data Visualization</h2>", unsafe_allow_html=True)
