@@ -110,8 +110,11 @@ if uploaded_file:
                                 st.write(f"F-Statistic: {f_stat}, P-Value: {p_val}")
                             elif test == "Chi-Square Test (independent categorical data)":
                                 contingency_table = pd.crosstab(data[col], data[col])
-                                chi2, p_val, _, _ = chi2_contingency(contingency_table)
-                                st.write(f"Chi2 Statistic: {chi2}, P-Value: {p_val}")
+                                if contingency_table.shape[0] > 1 and contingency_table.shape[1] > 1:
+                                    chi2, p_val, _, _ = chi2_contingency(contingency_table)
+                                    st.write(f"Chi2 Statistic: {chi2}, P-Value: {p_val}")
+                                else:
+                                    st.write("Error: Insufficient data in contingency table for Chi-Square Test.")
                         except Exception as e:
                             st.write(f"Error while performing the test: {e}")
         else:
