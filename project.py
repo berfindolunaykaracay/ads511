@@ -61,6 +61,7 @@ if uploaded_file:
                 elif unique_values > 2:
                     test_options[col] = ["Chi-Square Test"]
 
+        # Kullanıcıdan sütun ve test seçimi
         selected_test_col = st.selectbox("Select a column for hypothesis testing", list(test_options.keys()))
         if selected_test_col:
             available_tests = test_options[selected_test_col]
@@ -68,10 +69,12 @@ if uploaded_file:
 
             # Step 5: Varsayımların Kontrolü
             st.markdown("<h2 style='text-align: center; font-weight: bold;'>Step 5: Check Assumptions</h2>", unsafe_allow_html=True)
-            st.write("- Ensure data meets the assumptions for the selected test.")
-            st.write("For example:")
-            st.write("- Normality is required for parametric tests like T-Tests and ANOVA.")
-            st.write("- Variance homogeneity is required for ANOVA.")
+            if selected_test in ["Paired T-Test", "Independent T-Test", "One-Way ANOVA"]:
+                st.write("- **Assumption**: Data should follow a normal distribution.")
+                st.write("- **Assumption**: Variance should be homogeneous (for ANOVA).")
+            elif selected_test in ["Chi-Square Test", "McNemar Test"]:
+                st.write("- **Assumption**: Observations should be independent.")
+                st.write("- **Assumption**: Expected frequency in contingency table cells should be ≥ 5.")
 
             # Step 6: Testin Gerçekleştirilmesi
             st.markdown("<h2 style='text-align: center; font-weight: bold;'>Step 6: Perform the Test</h2>", unsafe_allow_html=True)
@@ -109,6 +112,6 @@ if uploaded_file:
                         _, p_val = fisher_exact(contingency_table.values)
                         st.write(f"P-Value: {p_val}")
                 except Exception as e:
-                    st.error(f"Error: {e}")
+                    st.error(f"An error occurred while performing the test: {e}")
 else:
     st.info("Please upload a dataset to proceed.")
