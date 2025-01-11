@@ -1,5 +1,7 @@
 import streamlit as st
 import pandas as pd
+from scipy.stats import ttest_rel, ttest_ind, chi2_contingency, f_oneway
+from statsmodels.stats.proportion import proportions_ztest
 
 # Başlık
 st.markdown("<h1 style='text-align: center; font-weight: bold;'>Hypothesis Testing Guide</h1>", unsafe_allow_html=True)
@@ -43,25 +45,23 @@ if uploaded_file:
                     if unique_values <= 10:  # Küçük grup sayısı için kontrol
                         dependency = "Dependent" if data[col].duplicated().any() else "Independent"
                         if dependency == "Dependent":
-                            recommendations.append((col, "Paired T-Test (tests dependent numerical groups)"))
+                            recommendations.append((col, "Paired T-Test"))
                         else:
-                            recommendations.append((col, "Independent T-Test (tests independent numerical groups)"))
+                            recommendations.append((col, "Independent T-Test"))
                     else:
                         dependency = "Independent"  # Çok fazla grup olduğunda bağımsız kabul edilir
-                        recommendations.append((col, "One-Way ANOVA (tests independent numerical groups)")
-                                              if unique_values > 2 else (col, "Independent T-Test"))
-
+                        recommendations.append((col, "One-Way ANOVA"))
                 else:
                     unique_values = data[col].nunique()
                     if unique_values == 2:
                         dependency = "Dependent" if data[col].duplicated().any() else "Independent"
                         if dependency == "Dependent":
-                            recommendations.append((col, "McNemar Test (tests dependent categorical data)"))
+                            recommendations.append((col, "McNemar Test"))
                         else:
-                            recommendations.append((col, "Chi-Square Test (tests independent categorical data)"))
+                            recommendations.append((col, "Chi-Square Test"))
                     elif unique_values > 2:
                         dependency = "Independent"  # Çok kategorili bağımsız kabul edilir
-                        recommendations.append((col, "Chi-Square Test (tests independent categorical data with >2 categories)"))
+                        recommendations.append((col, "Chi-Square Test"))
 
             if recommendations:
                 for col, test in recommendations:
@@ -71,10 +71,37 @@ if uploaded_file:
 
             # Step 5: Test Gerçekleştirme
             st.markdown("<h2 style='text-align: center; font-weight: bold;'>Step 5: Perform a Hypothesis Test</h2>", unsafe_allow_html=True)
+            selected_test_col = st.selectbox("Choose a column for testing", [col for col, _ in recommendations])
             selected_test = st.selectbox("Choose a Hypothesis Test to Perform", [test for _, test in recommendations])
+
             if st.button("Run Test"):
-                st.write(f"Performing: {selected_test}")
-                st.write("(Test logic to be implemented here)")
+                st.write(f"Performing: {selected_test} on {selected_test_col}")
+                try:
+                    if selected_test == "Paired T-Test":
+                        col_data = data[selected_test_col].dropna()
+                        t_stat, p_val = ttest_rel(col_data[:-1], col_data[1:])
+                        st.write(f"T-Statistic: {t_stat}, P-Value: {p_val}")
+                    elif selected_test == "Independent T-Test":
+                        col_data = data[selected_test_col].dropna()
+                        group1 = col_data[:len(col_data)//2]
+                        group2 = col_data[len(col_data)//2:]
+                        t_stat, p_val = ttest_ind(group1, group2)
+                        st.write(f"T-Statistic: {t_stat}, P-Value: {p_val}")
+                    elif selected_test == "One-Way ANOVA":
+                        col_data = data[selected_test_col].dropna()
+                        groups = [col_data[:len(col_data)//3], col_data[len(col_data)//3:2*len(col_data)//3], col_data[2*len(col_data)//3:]]
+                        f_stat, p_val = f_oneway(*groups)
+                        st.write(f"F-Statistic: {f_stat}, P-Value: {p_val}")
+                    elif selected_test == "Chi-Square Test":
+                        contingency_table = pd.crosstab(data[selected_test_col], data[selected_test_col])
+                        chi2, p_val, _, _ = chi2_contingency(contingency_table)
+                        st.write(f"Chi2 Statistic: {chi2}, P-Value: {p_val}")
+                    elif selected_test == "McNemar Test":
+                        contingency_table = pd.crosstab(data[selected_test_col], data[selected_test_col])
+                        _, p_val = proportions_ztest(contingency_table.iloc[0], contingency_table.iloc[1])
+                        st.write(f"P-Value: {p_val}")
+                except Exception as e:
+                    st.write(f"Error while performing the test: {e}")
         else:
             st.write("No columns selected for testing.")
     else:
