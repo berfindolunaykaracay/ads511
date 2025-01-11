@@ -6,14 +6,14 @@ st.markdown(
     """
     <style>
         body {
-            background-color: #f0f8ff;
-            color: #333;
+            background-color: white;
+            color: #002366;
         }
         h1 {
-            color: #4a90e2;
+            color: #002366;
         }
         .stButton button {
-            background-color: #4a90e2;
+            background-color: #002366;
             color: white;
             border-radius: 5px;
             font-size: 16px;
