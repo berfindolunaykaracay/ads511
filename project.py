@@ -11,6 +11,7 @@ st.markdown(
         }
         h1 {
             color: #002366;
+            text-align: center;
         }
         .stButton button {
             background-color: #002366;
@@ -18,13 +19,17 @@ st.markdown(
             border-radius: 5px;
             font-size: 16px;
         }
+        .stFileUploader {
+            margin-top: 30px;
+            text-align: center;
+        }
     </style>
     """,
     unsafe_allow_html=True
 )
 
 # Başlık
-st.markdown("<h1 style='text-align: center;'>Hypothesis Testing App</h1>", unsafe_allow_html=True)
+st.markdown("<h1>Hypothesis Testing App</h1>", unsafe_allow_html=True)
 
 # Boşluk ve stil ayarları
 st.markdown("<div style='margin-top: 30px; text-align: center; font-size: 20px;'>Upload a CSV file</div>", unsafe_allow_html=True)
