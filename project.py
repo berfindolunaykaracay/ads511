@@ -14,26 +14,26 @@ if uploaded_file:
     st.markdown("<h2 style='text-align: center; font-weight: bold;'>Dataset Preview</h2>", unsafe_allow_html=True)
 
     # Dataset boyutu
-    st.write(f"**Number of rows:** {data.shape[0]}")
-    st.write(f"**Number of columns:** {data.shape[1]}")
+    st.write(f"_Number of rows:_ {data.shape[0]}")
+    st.write(f"_Number of columns:_ {data.shape[1]}")
 
     # Tüm veri önizleme
-    st.write("### **Full Dataset**")
+    st.write("### _Full Dataset_")
     st.dataframe(data)
 
     # İlk 9 sütun için birden fazla seçim yapma
-    st.write("### **Select Columns from First 9 Columns**")
+    st.write("### _Select Columns from First 9 Columns_")
     first_9_columns = data.columns[:9]
     selected_columns = st.multiselect("Select columns", first_9_columns)
 
     if selected_columns:
-        st.write(f"### **Data for Selected Columns:** {', '.join([f'*{col}*' for col in selected_columns])}")
+        st.write(f"### _Data for Selected Columns:_ {', '.join([f'*{col}*' for col in selected_columns])}")
         st.dataframe(data[selected_columns].reset_index(drop=True))
     else:
         st.write("No columns selected.")
 
     # Teste tabi tutulacak sütunları seçme
-    st.write("### **Select Columns for Hypothesis Testing**")
+    st.write("### _Select Columns for Hypothesis Testing_")
     num_columns = len(data.columns)
     rows = num_columns // 3 + (num_columns % 3 > 0)
     testing_columns = []
@@ -48,6 +48,19 @@ if uploaded_file:
                     testing_columns.append(col_name)
 
     if testing_columns:
-        st.write(f"### **Selected Columns for Testing:** {', '.join([f'*{col}*' for col in testing_columns])}")
+        st.write(f"### _Selected Columns for Testing:_ {', '.join([f'*{col}*' for col in testing_columns])}")
+
+        # Data type seçimi sadece sütunlar seçildiyse
+        st.write("### _Select Data Type for Testing Columns_")
+        data_type_choices = {}
+        for col in testing_columns:
+            data_type_choices[col] = st.selectbox(
+                f"Select data type for {col}", ["Numerical", "Categorical"], key=f"type_{col}"
+            )
+
+        st.write("### _Selected Data Types:_")
+        for col, dtype in data_type_choices.items():
+            st.write(f"_{col}: {dtype}_")
+
     else:
         st.write("No columns selected for testing.")
