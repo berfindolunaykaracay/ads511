@@ -47,12 +47,19 @@ categorical_tests = {
 st.set_page_config(page_title="Hypothesis Testing Application", page_icon="⚛", layout="wide")
 
 # Sidebar header and logo
-st.sidebar.image("TEDU_LOGO.png", use_container_width=True)
+try:
+    st.sidebar.image("TEDU_LOGO.png", use_container_width=True)
+except Exception:
+    st.sidebar.warning("Logo file not found. Please check the file path.")
+
 st.sidebar.title("ADS 511: Statistical Inference Methods")
 st.sidebar.write("Developed by: Serdar Hosver")
 
 st.sidebar.title("Hypothesis Testing Map")
-st.sidebar.image("Hypothesis_Test_Map.png", use_container_width=True)
+try:
+    st.sidebar.image("Hypothesis_Test_Map.png", use_container_width=True)
+except Exception:
+    st.sidebar.warning("Hypothesis Testing Map image not found. Please check the file path.")
 
 # Sidebar to display all available tests
 st.sidebar.header("List of Available Hypothesis Tests")
