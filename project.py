@@ -142,6 +142,18 @@ if data_type == "Numerical Data":
     else:
         st.info("Your data is non-parametric.")
 
+    # Recommend the best test based on assumptions
+    if parametric and len(all_groups) == 2:
+        st.success("Recommended Test: Independent T-Test or Dependent T-Test (if groups are paired).")
+    elif parametric and len(all_groups) > 2:
+        st.success("Recommended Test: One-Way ANOVA.")
+    elif not parametric and len(all_groups) == 2:
+        st.success("Recommended Test: Mann-Whitney U Test or Wilcoxon Signed-Rank Test (if groups are paired).")
+    elif not parametric and len(all_groups) > 2:
+        st.success("Recommended Test: Kruskal-Wallis Test or Friedman Test (if groups are repeated measures).")
+    else:
+        st.info("Please ensure your data and assumptions match the test requirements.")
+
 # Step 3: Hypothesis Testing
 st.markdown("<h2 style='text-align: center;'>Step 3: Select and Perform a Hypothesis Test</h2>", unsafe_allow_html=True)
 
