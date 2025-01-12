@@ -1,170 +1,157 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-from scipy.stats import shapiro, levene, ttest_ind, mannwhitneyu, wilcoxon
+from scipy import stats
+from statsmodels.stats.contingency_tables import mcnemar
 from scipy.stats import chi2_contingency, fisher_exact
-import matplotlib.pyplot as plt
-
-# Pandas settings
 pd.options.display.float_format = '{:,.4f}'.format
 
-# Title
-st.markdown("<h1 style='text-align: center; font-weight: bold;'>Hypothesis Testing Application</h1>", unsafe_allow_html=True)
+def check_normality(data):
+    if not isinstance(data, (list, np.ndarray, pd.Series)):
+        raise ValueError("Data must be a list, NumPy array, or pandas Series.")
+    data = np.array(data)
 
-# Functions
+    test_stat_normality, p_value_normality = stats.shapiro(data)
+    return p_value_normality, p_value_normality >= 0.05
 
-def load_data(file):
-    try:
-        data = pd.read_csv(file)
-        return data
-    except Exception as e:
-        st.error(f"Error while loading data: {e}")
-        return None
+def check_variance_homogeneity(data):
+    if len(data) < 2:
+        return None, False
+    test_stat_var, p_value_var = stats.levene(*data)
+    return p_value_var, p_value_var >= 0.05
 
-def describe_columns(data):
-    column_details = pd.DataFrame({
-        "Column Name": data.columns,
-        "Data Type": data.dtypes,
-        "Unique Values": [data[col].nunique() for col in data.columns],
-        "Missing Values": [data[col].isnull().sum() for col in data.columns]
-    })
-    return column_details
+# Test descriptions
+numerical_tests_parametric = {
+    "Independent T-Test": "Compares means of two independent groups. Assumes normality and equal variances.",
+    "Dependent (Paired) T-Test": "Compares means of two related groups. Assumes normality of the differences.",
+    "Repeated Measures ANOVA": "Tests differences across multiple measurements on the same group.",
+    "One-Way ANOVA": "Tests mean differences across three or more independent groups."
+}
 
-def run_shapiro_test(data):
-    stat, p = shapiro(data)
-    return stat, p
+numerical_tests_nonparametric = {
+    "Wilcoxon Signed-Rank Test": "Non-parametric alternative to paired T-Test. Compares medians of two related samples.",
+    "Mann-Whitney U Test": "Non-parametric alternative to independent T-Test. Compares two independent distributions.",
+    "Friedman Test (Chi-Square)": "Non-parametric test for repeated measures on the same group.",
+    "Kruskal-Wallis Test": "Non-parametric alternative to One-Way ANOVA. Tests differences across multiple groups."
+}
 
-def run_levene_test(group1, group2):
-    stat, p = levene(group1, group2)
-    return stat, p
+categorical_tests = {
+    "McNemar Test": "Tests changes in matched categorical data (e.g., before and after).",
+    "Chi-Squared Test": "Tests association between two categorical variables.",
+    "Fisher's Exact Test": "Exact test for association in small categorical tables.",
+    "Cochran Q Test": "Tests differences in proportions across multiple matched groups.",
+    "Marginal Homogeneity Test": "Tests shifts in matched categorical data."
+}
 
-def check_outliers(data):
-    q1 = np.percentile(data, 25)
-    q3 = np.percentile(data, 75)
-    iqr = q3 - q1
-    lower_bound = q1 - 1.5 * iqr
-    upper_bound = q3 + 1.5 * iqr
-    outliers = data[(data < lower_bound) | (data > upper_bound)]
-    return len(outliers), outliers
+# Streamlit app starts here
+st.set_page_config(page_title="Hypothesis Testing Application", page_icon="⚛", layout="wide")
 
-def display_test_results(test_name, stat, p_value):
-    st.markdown(f"### {test_name} Results")
-    st.write(f"- Test Statistic: {stat:.4f}")
-    st.write(f"- P-value: {p_value:.4f}")
-    if p_value > 0.05:
-        st.success("Result: The null hypothesis cannot be rejected.")
+# Sidebar header and logo
+st.sidebar.image("TEDU_LOGO.png", use_container_width=True)
+st.sidebar.title("ADS 511: Statistical Inference Methods")
+st.sidebar.write("Developed by: Serdar Hosver")
+
+st.sidebar.title("Hypothesis Testing Map")
+st.sidebar.image("Hypothesis_Test_Map.png", use_container_width=True)
+
+# Sidebar to display all available tests
+st.sidebar.header("List of Available Hypothesis Tests")
+for category, tests in [("Parametric Tests", numerical_tests_parametric),
+                        ("Non-Parametric Tests", numerical_tests_nonparametric),
+                        ("Categorical Tests", categorical_tests)]:
+    st.sidebar.subheader(category)
+    for test, description in tests.items():
+        with st.sidebar.expander(f"ℹ️ {test}"):
+            st.write(description)
+
+# Title and Introduction
+st.title("Hypothesis Testing Application")
+st.markdown("This app allows you to perform various **hypothesis tests** with ease. Simply upload your data or enter it manually, and let the app guide you through hypothesis testing.")
+
+# Step 1: Data Input
+st.header("Step 1: Data Input")
+data_choice = st.radio("How would you like to input your data?", ("Upload CSV", "Enter Manually"))
+
+all_groups = []
+if data_choice == "Upload CSV":
+    uploaded_file = st.file_uploader("Upload your CSV file", type=["csv"])
+    if uploaded_file is not None:
+        data = pd.read_csv(uploaded_file)
+        st.write("Dataset Preview:")
+        st.write(data.head())
+
+        columns = st.multiselect("Select columns for testing", options=data.columns)
+        if columns:
+            all_groups = [data[col].dropna().tolist() for col in columns]
+
+elif data_choice == "Enter Manually":
+    st.write("Enter your data as arrays. Type each array separately.")
+    group_input = st.text_area("Enter arrays (e.g., [1,2,3]) one by one, separated by new lines.")
+    if group_input:
+        try:
+            all_groups = [eval(line.strip()) for line in group_input.splitlines() if line.strip()]
+        except Exception as e:
+            st.error(f"Error in parsing input: {e}")
+
+if not all_groups:
+    st.warning("No valid data provided.")
+    st.stop()
+
+# Step 1.5: Data Type Selection
+data_type = st.radio(
+    "What is your data type?",
+    options=["Select", "Numerical Data", "Categorical Data"],
+    index=0
+)
+
+if data_type == "Select":
+    st.warning("Please select your data type to proceed.")
+    st.stop()
+
+# Step 2: Assumption Checks (if Numerical Data)
+if data_type == "Numerical Data":
+    st.header("Step 2: Assumption Check")
+    st.write("Performing Normality and Variance Homogeneity Tests")
+
+    results = []
+    for i, group in enumerate(all_groups, start=1):
+        try:
+            p_normality, is_normal = check_normality(group)
+            results.append((f"Group {i}", "Normality", p_normality, "Pass" if is_normal else "Fail"))
+        except ValueError as e:
+            st.error(f"Error with Group {i}: {e}")
+
+    if len(all_groups) > 1:
+        try:
+            p_variance, is_homogeneous = check_variance_homogeneity(all_groups)
+            results.append(("All Groups", "Variance Homogeneity", p_variance, "Pass" if is_homogeneous else "Fail"))
+        except Exception as e:
+            st.error(f"Error in Variance Homogeneity Test: {e}")
+
+    results_df = pd.DataFrame(results, columns=["Group", "Test", "P-value", "Result"])
+    st.table(results_df)
+
+    parametric = all(res[3] == "Pass" for res in results)
+    if parametric:
+        st.info("Your data is parametric.")
     else:
-        st.error("Result: The null hypothesis is rejected.")
+        st.info("Your data is non-parametric.")
 
-# Step 1: Load Data
-st.markdown("<h2 style='text-align: center; font-weight: bold;'>Step 1: Load Dataset</h2>", unsafe_allow_html=True)
-uploaded_file = st.file_uploader("Upload a CSV file for analysis", type=["csv"])
+# Step 3: Hypothesis Testing
+st.header("Step 3: Select and Perform a Hypothesis Test")
 
-if uploaded_file:
-    data = load_data(uploaded_file)
-
-    if data is not None:
-        # General Information
-        st.write(f"**Number of Rows:** {data.shape[0]}")
-        st.write(f"**Number of Columns:** {data.shape[1]}")
-
-        # Column Details
-        st.write("### Column Details")
-        column_details = describe_columns(data)
-        st.dataframe(column_details)
-
-        # Data Preview
-        st.write("### Dataset Preview")
-        st.dataframe(data.head())
-
-        # Step 2: Select Columns and Define Groups
-        st.markdown("<h2 style='text-align: center; font-weight: bold;'>Step 2: Select Columns and Define Groups</h2>", unsafe_allow_html=True)
-        selected_columns = st.multiselect("Select columns for hypothesis testing", data.columns.tolist())
-
-        if not selected_columns:
-            st.warning("Please select at least one column to proceed.")
-            st.stop()
-
-        for column in selected_columns:
-            cleaned_data = data[column].dropna()
-
-            if cleaned_data.empty:
-                st.error(f"'{column}' column does not contain valid data for hypothesis testing.")
-                continue
-
-            if pd.api.types.is_numeric_dtype(cleaned_data):
-                st.markdown(f"<h3 style='text-align: center;'>{column} Column Analysis (Numerical)</h3>", unsafe_allow_html=True)
-
-                # Step 3: Define Hypothesis
-                st.subheader(f"Define Hypotheses for {column}")
-                st.write("**Null Hypothesis (H0):** No significant difference.")
-                st.write("**Alternative Hypothesis (H1):** There is a significant difference.")
-
-                # Step 4: Assumption Check
-                st.subheader(f"Assumption Check for {column}")
-
-                # Normality Test
-                if st.checkbox(f"Perform Normality Test (Shapiro-Wilk) for {column}"):
-                    stat, p_value = run_shapiro_test(cleaned_data)
-                    display_test_results("Shapiro-Wilk Test", stat, p_value)
-
-                # Homogeneity of Variance
-                if len(cleaned_data) >= 2 and st.checkbox(f"Perform Variance Homogeneity Test (Levene) for {column}"):
-                    group1 = cleaned_data[:len(cleaned_data)//2]
-                    group2 = cleaned_data[len(cleaned_data)//2:]
-                    stat, p_value = run_levene_test(group1, group2)
-                    display_test_results("Levene Test", stat, p_value)
-
-                # Outlier Check
-                if st.checkbox(f"Check for Outliers in {column}"):
-                    outlier_count, outliers = check_outliers(cleaned_data)
-                    st.write(f"Number of Outliers: {outlier_count}")
-                    if outlier_count > 0:
-                        st.write("Outliers:")
-                        st.write(outliers)
-
-                # Independent and Identically Distributed (IID) Check
-                st.write("**Note:** IID checks need external validation based on domain knowledge.")
-
-                # Step 5: Decide Test Type
-                st.subheader(f"Test Type Decision for {column}")
-                parametric_conditions = st.checkbox("All Assumptions for Parametric Tests are Met")
-
-                if parametric_conditions:
-                    test_type = st.radio("Select a Parametric Test", ["Independent T-Test", "Paired T-Test"])
-                else:
-                    test_type = st.radio("Select a Non-Parametric Test", ["Mann-Whitney U Test", "Wilcoxon Signed-Rank Test"])
-
-                # Step 6: Evaluation
-                if st.button(f"Run {test_type} for {column}"):
-                    if test_type == "Independent T-Test":
-                        stat, p_value = ttest_ind(group1, group2)
-                        display_test_results("Independent T-Test", stat, p_value)
-                    elif test_type == "Paired T-Test":
-                        st.error("Paired T-Test requires paired data.")
-                    elif test_type == "Mann-Whitney U Test":
-                        stat, p_value = mannwhitneyu(group1, group2)
-                        display_test_results("Mann-Whitney U Test", stat, p_value)
-                    elif test_type == "Wilcoxon Signed-Rank Test":
-                        stat, p_value = wilcoxon(group1, group2)
-                        display_test_results("Wilcoxon Signed-Rank Test", stat, p_value)
-
-            elif pd.api.types.is_categorical_dtype(cleaned_data) or isinstance(cleaned_data.iloc[0], str):
-                st.markdown(f"<h3 style='text-align: center;'>{column} Column Analysis (Categorical)</h3>", unsafe_allow_html=True)
-                st.subheader(f"Non-Parametric Analysis for {column}")
-                st.write("Categorical data automatically uses non-parametric tests.")
-
-                test_type = st.radio("Select a Test", ["Chi-Square Test", "Fisher's Exact Test"])
-
-                if st.button(f"Run {test_type} for {column}"):
-                    if test_type == "Chi-Square Test":
-                        st.error("Chi-Square Test requires contingency tables.")
-                    elif test_type == "Fisher's Exact Test":
-                        st.error("Fisher's Exact Test requires contingency tables.")
-
-            else:
-                st.error(f"'{column}' column contains unsupported data type. Please select columns with numerical or categorical data.")
-    else:
-        st.warning("The uploaded dataset could not be processed.")
+if data_type == "Numerical Data":
+    test_list = numerical_tests_parametric if parametric else numerical_tests_nonparametric
 else:
-    st.info("Please upload a CSV file.")
+    test_list = categorical_tests
+
+selected_test = st.selectbox("Choose the specific test to perform:", list(test_list.keys()))
+
+# Display test description
+st.info(f"**Test Description:** {test_list[selected_test]}")
+
+if st.button("Run Test"):
+    st.write(f"Performing {selected_test}...")
+    # Add test-specific implementation logic here.
+
+st.write("Thank you for using the Hypothesis Testing Application!")
