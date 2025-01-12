@@ -22,25 +22,25 @@ def check_variance_homogeneity(data):
 
 # Test descriptions
 numerical_tests_parametric = {
-    "Independent T-Test": "Compares means of two independent groups. Assumes normality and equal variances.",
-    "Dependent (Paired) T-Test": "Compares means of two related groups. Assumes normality of the differences.",
-    "Repeated Measures ANOVA": "Tests differences across multiple measurements on the same group.",
-    "One-Way ANOVA": "Tests mean differences across three or more independent groups."
+    "Independent T-Test": "Examines if two independent groups have significantly different means, assuming data normality and equal variances.",
+    "Dependent (Paired) T-Test": "Analyzes mean differences between two related groups, assuming normal distribution of paired differences.",
+    "Repeated Measures ANOVA": "Identifies significant differences across multiple measurements for the same group under different conditions.",
+    "One-Way ANOVA": "Determines whether there are significant differences in means among three or more independent groups."
 }
 
 numerical_tests_nonparametric = {
-    "Wilcoxon Signed-Rank Test": "Non-parametric alternative to paired T-Test. Compares medians of two related samples.",
-    "Mann-Whitney U Test": "Non-parametric alternative to independent T-Test. Compares two independent distributions.",
-    "Friedman Test (Chi-Square)": "Non-parametric test for repeated measures on the same group.",
-    "Kruskal-Wallis Test": "Non-parametric alternative to One-Way ANOVA. Tests differences across multiple groups."
+    "Wilcoxon Signed-Rank Test": "Tests for differences in medians of paired samples, suitable for non-normal data.",
+    "Mann-Whitney U Test": "Compares distributions of two independent groups without assuming normality.",
+    "Friedman Test (Chi-Square)": "Detects differences across repeated measures in non-parametric settings.",
+    "Kruskal-Wallis Test": "Assesses differences in medians among three or more independent groups, ideal for ordinal data or non-normal distributions."
 }
 
 categorical_tests = {
-    "McNemar Test": "Tests changes in matched categorical data (e.g., before and after).",
-    "Chi-Squared Test": "Tests association between two categorical variables.",
-    "Fisher's Exact Test": "Exact test for association in small categorical tables.",
-    "Cochran Q Test": "Tests differences in proportions across multiple matched groups.",
-    "Marginal Homogeneity Test": "Tests shifts in matched categorical data."
+    "McNemar Test": "Evaluates changes in paired categorical data, commonly used for pre- and post-intervention comparisons.",
+    "Chi-Squared Test": "Tests for associations between two categorical variables using contingency tables.",
+    "Fisher's Exact Test": "Analyzes relationships in small sample categorical data, providing exact p-values.",
+    "Cochran Q Test": "Assesses differences in proportions across multiple related groups in binary data.",
+    "Marginal Homogeneity Test": "Examines shifts in paired categorical data to detect significant changes."
 }
 
 # Streamlit app starts here
@@ -73,10 +73,10 @@ for category, tests in [("Parametric Tests", numerical_tests_parametric),
 
 # Title and Introduction
 st.markdown("<h1 style='text-align: center;'>Hypothesis Testing Application</h1>", unsafe_allow_html=True)
-st.markdown("<p style='text-align: center;'>This app allows you to perform various <b>hypothesis tests</b> with ease. Simply upload your data, and let the app guide you through hypothesis testing.</p>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: center;'>This application helps you conduct various <b>hypothesis tests</b>. Simply upload your data and proceed with guided testing steps.</p>", unsafe_allow_html=True)
 
-# Step 1: Data Input
-st.markdown("<h2 style='text-align: center;'>Step 1: Data Input</h2>", unsafe_allow_html=True)
+# Data Input
+st.markdown("<h2 style='text-align: center;'>Data Input</h2>", unsafe_allow_html=True)
 uploaded_file = st.file_uploader("Upload your CSV file", type=["csv"])
 
 all_groups = []
@@ -90,7 +90,7 @@ if uploaded_file is not None:
     st.write("### Full Dataset Preview:")
     st.write(data)
 
-    columns = st.radio("Select one of the following options:", ("Select All Columns", "Manually Select Columns"))
+    columns = st.radio("Choose column selection method:", ("Select All Columns", "Manually Select Columns"))
 
     if columns == "Select All Columns":
         column_names = data.select_dtypes(include=[np.number]).columns.tolist()
@@ -99,7 +99,7 @@ if uploaded_file is not None:
         st.write(data[column_names])
 
     elif columns == "Manually Select Columns":
-        selected_columns = st.multiselect("Choose columns to include", options=data.columns)
+        selected_columns = st.multiselect("Pick columns to include", options=data.columns)
         if selected_columns:
             column_names = [col for col in selected_columns if pd.api.types.is_numeric_dtype(data[col])]
             all_groups = [data[col].dropna().tolist() for col in column_names]
@@ -110,24 +110,24 @@ if not all_groups:
     st.warning("No valid data provided.")
     st.stop()
 
-# Step 1.5: Data Type Selection
+# Data Type Selection
 data_type = st.selectbox(
-    "Select your data type:",
+    "Choose your data type:",
     options=["Numerical Data", "Categorical Data"]
 )
 
-# Step 2: Assumption Checks (if Numerical Data)
+# Assumption Checks
 if data_type == "Numerical Data":
-    st.markdown("<h2 style='text-align: center;'>Step 2: Assumption Check</h2>", unsafe_allow_html=True)
-    st.write("Performing Normality and Variance Homogeneity Tests")
+    st.markdown("<h2 style='text-align: center;'>Assumption Checks</h2>", unsafe_allow_html=True)
+    st.write("Verifying Normality and Variance Homogeneity Assumptions")
 
     for col_name, group in zip(column_names, all_groups):
         try:
             p_normality, is_normal = check_normality(group)
             if is_normal:
-                st.success(f"Normality Test for {col_name}: P-value = {p_normality:.4f} (Pass)")
+                st.success(f"Normality Check for {col_name}: P-value = {p_normality:.4f} (Pass)")
             else:
-                st.warning(f"Normality Test for {col_name}: P-value = {p_normality:.4f} (Fail)")
+                st.warning(f"Normality Check for {col_name}: P-value = {p_normality:.4f} (Fail)")
         except ValueError as e:
             st.error(f"Error with column {col_name}: {e}")
 
@@ -135,59 +135,60 @@ if data_type == "Numerical Data":
         try:
             p_variance, is_homogeneous = check_variance_homogeneity(all_groups)
             if is_homogeneous:
-                st.success(f"Variance Homogeneity Test: P-value = {p_variance:.4f} (Pass)")
+                st.success(f"Variance Homogeneity Check: P-value = {p_variance:.4f} (Pass)")
             else:
-                st.warning(f"Variance Homogeneity Test: P-value = {p_variance:.4f} (Fail)")
+                st.warning(f"Variance Homogeneity Check: P-value = {p_variance:.4f} (Fail)")
         except Exception as e:
-            st.error(f"Error in Variance Homogeneity Test: {e}")
+            st.error(f"Error in Variance Homogeneity Check: {e}")
 
     parametric = all(check_normality(group)[1] for group in all_groups)
     if parametric:
-        st.info("Your data is parametric.")
+        st.info("The data meets parametric assumptions.")
     else:
-        st.info("Your data is non-parametric.")
+        st.info("The data does not meet parametric assumptions.")
 
-    # Recommend the best test based on assumptions
+    # Recommended Test
     if parametric and len(all_groups) == 2:
-        st.success("Recommended Test: Independent T-Test or Dependent T-Test (if groups are paired).")
+        st.success("Recommended Test: Independent T-Test or Dependent T-Test (for paired groups).")
     elif parametric and len(all_groups) > 2:
         st.success("Recommended Test: One-Way ANOVA.")
     elif not parametric and len(all_groups) == 2:
-        st.success("Recommended Test: Mann-Whitney U Test or Wilcoxon Signed-Rank Test (if groups are paired).")
+        st.success("Recommended Test: Mann-Whitney U Test or Wilcoxon Signed-Rank Test (for paired groups).")
     elif not parametric and len(all_groups) > 2:
-        st.success("Recommended Test: Kruskal-Wallis Test or Friedman Test (if groups are repeated measures).")
+        st.success("Recommended Test: Kruskal-Wallis Test or Friedman Test (for repeated measures).")
     else:
-        st.info("Please ensure your data and assumptions match the test requirements.")
+        st.info("Ensure data compatibility with selected test.")
 
-# Step 3: Hypothesis Testing
-st.markdown("<h2 style='text-align: center;'>Step 3: Select and Perform a Hypothesis Test</h2>", unsafe_allow_html=True)
+# Hypothesis Testing
+st.markdown("<h2 style='text-align: center;'>Hypothesis Testing</h2>", unsafe_allow_html=True)
 
 if data_type == "Numerical Data":
     test_list = numerical_tests_parametric if parametric else numerical_tests_nonparametric
 else:
     test_list = categorical_tests
 
-selected_test = st.selectbox("Choose the specific test to perform:", list(test_list.keys()))
+selected_test = st.selectbox("Choose the test you want to perform:", list(test_list.keys()))
 
 # Display test description
-st.info(f"**Test Description:** {test_list[selected_test]}")
+st.info(f"**Test Overview:** {test_list[selected_test]}")
 
 if st.button("Run Test"):
     try:
         if selected_test == "Independent T-Test" and len(all_groups) >= 2:
             t_stat, p_value = stats.ttest_ind(all_groups[0], all_groups[1])
-            st.success(f"Independent T-Test: t-statistic = {t_stat:.4f}, p-value = {p_value:.4f}")
+            st.success(f"Independent T-Test Results: t-statistic = {t_stat:.4f}, p-value = {p_value:.4f}")
         elif selected_test == "Dependent (Paired) T-Test" and len(all_groups) >= 2:
             t_stat, p_value = stats.ttest_rel(all_groups[0], all_groups[1])
-            st.success(f"Dependent T-Test: t-statistic = {t_stat:.4f}, p-value = {p_value:.4f}")
+            st.success(f"Dependent T-Test Results: t-statistic = {t_stat:.4f}, p-value = {p_value:.4f}")
         elif selected_test == "One-Way ANOVA" and len(all_groups) > 2:
             f_stat, p_value = stats.f_oneway(*all_groups)
-            st.success(f"One-Way ANOVA: F-statistic = {f_stat:.4f}, p-value = {p_value:.4f}")
+            st.success(f"One-Way ANOVA Results: F-statistic = {f_stat:.4f}, p-value = {p_value:.4f}")
         elif selected_test == "Mann-Whitney U Test" and len(all_groups) >= 2:
             u_stat, p_value = stats.mannwhitneyu(all_groups[0], all_groups[1])
-            st.success(f"Mann-Whitney U Test: U-statistic = {u_stat:.4f}, p-value = {p_value:.4f}")
+            st.success(f"Mann-Whitney U Test Results: U-statistic = {u_stat:.4f}, p-value = {p_value:.4f}")
         else:
             st.error("The selected test is not implemented or requires more groups.")
     except Exception as e:
-        st.error(f"An error occurred while performing the test: {e}")
+        st.error(f"An error occurred during the test: {e}")
 
+st.write("Thank you for using the Hypothesis Testing Application!")
