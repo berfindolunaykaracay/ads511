@@ -95,26 +95,32 @@ if data_type == "Numerical Data":
     for col_name, group in zip(column_names, all_groups):
         try:
             p_normality, is_normal = check_normality(group)
-            normality_results.append((col_name, p_normality, "Pass" if is_normal else "Fail"))
+            if is_normal:
+                st.success(f"Normality Check for {col_name}: P-value = {p_normality:.4f} (Pass)")
+            else:
+                st.warning(f"Normality Check for {col_name}: P-value = {p_normality:.4f} (Fail)")
+            normality_results.append((col_name, p_normality, is_normal))
         except ValueError as e:
             st.error(f"Error with column {col_name}: {e}")
 
     if len(all_groups) > 1:
         try:
             p_variance, is_homogeneous = check_variance_homogeneity(all_groups)
-            st.write(f"### Variance Homogeneity Check: P-value = {p_variance:.4f}")
-            st.write("Pass" if is_homogeneous else "Fail")
+            if is_homogeneous:
+                st.success(f"Variance Homogeneity Check: P-value = {p_variance:.4f} (Pass)")
+            else:
+                st.warning(f"Variance Homogeneity Check: P-value = {p_variance:.4f} (Fail)")
         except Exception as e:
             st.error(f"Error in Variance Homogeneity Check: {e}")
 
     # Recommended Test Based on Assumptions
     if len(all_groups) == 2:
-        if all(res[2] == "Pass" for res in normality_results) and is_homogeneous:
+        if all(res[2] for res in normality_results) and is_homogeneous:
             st.success("Recommended Test: Independent T-Test or Dependent T-Test (for paired groups).")
         else:
             st.success("Recommended Test: Mann-Whitney U Test or Wilcoxon Signed-Rank Test (for paired groups).")
     elif len(all_groups) > 2:
-        if all(res[2] == "Pass" for res in normality_results) and is_homogeneous:
+        if all(res[2] for res in normality_results) and is_homogeneous:
             st.success("Recommended Test: One-Way ANOVA.")
         else:
             st.success("Recommended Test: Kruskal-Wallis Test or Friedman Test (for repeated measures).")
@@ -130,7 +136,7 @@ if data_type == "Categorical Data":
 st.markdown("<h2 style='text-align: center;'>Hypothesis Testing</h2>", unsafe_allow_html=True)
 
 if data_type == "Numerical Data":
-    test_list = numerical_tests_parametric if all(res[2] == "Pass" for res in normality_results) and is_homogeneous else numerical_tests_nonparametric
+    test_list = numerical_tests_parametric if all(res[2] for res in normality_results) and is_homogeneous else numerical_tests_nonparametric
 else:
     test_list = categorical_tests
     st.write("### Selected Categorical Columns Preview:")
@@ -180,5 +186,4 @@ if st.button("Run Test"):
             st.error("The selected test is not implemented or requires more groups.")
     except Exception as e:
         st.error(f"An error occurred during the test: {e}")
-
 
