@@ -89,21 +89,15 @@ if uploaded_file is not None:
     st.write("### Full Dataset Preview:")
     st.write(data)
 
-    # Filter numeric columns only
-    numeric_columns = data.select_dtypes(include=[np.number]).columns.tolist()
-    if not numeric_columns:
-        st.error("The dataset does not contain any numeric columns. Please upload a dataset with numeric data for analysis.")
-        st.stop()
+    columns = st.radio("Select one of the following options:", ("Select All Columns", "Manually Select Columns"))
 
-    columns = st.radio("Select one of the following options:", ("Select All Numeric Columns", "Manually Select Columns"))
-
-    if columns == "Select All Numeric Columns":
-        all_groups = [data[col].dropna().tolist() for col in numeric_columns]
+    if columns == "Select All Columns":
+        all_groups = [data[col].dropna().tolist() for col in data.columns]
         st.write("### Selected Columns Preview:")
-        st.write(data[numeric_columns])
+        st.write(data)
 
     elif columns == "Manually Select Columns":
-        selected_columns = st.multiselect("Choose columns to include", options=numeric_columns)
+        selected_columns = st.multiselect("Choose columns to include", options=data.columns)
         if selected_columns:
             all_groups = [data[col].dropna().tolist() for col in selected_columns]
             st.write("### Selected Columns Preview:")
