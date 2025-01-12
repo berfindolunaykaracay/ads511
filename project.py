@@ -44,10 +44,10 @@ categorical_tests = {
 }
 
 # Streamlit app starts here
-st.set_page_config(page_title="Hypothesis Testing Application", page_icon="⚛", layout="wide")
+st.set_page_config(page_title="Hypothesis Testing App", page_icon="⚛", layout="wide")
 
 # Title and Introduction
-st.markdown("<h1 style='text-align: center;'>Hypothesis Testing Application</h1>", unsafe_allow_html=True)
+st.markdown("<h1 style='text-align: center;'>Hypothesis Testing App</h1>", unsafe_allow_html=True)
 st.markdown("<p style='text-align: center;'>This application helps you conduct various <b>hypothesis tests</b>. Simply upload your data and proceed with guided testing steps.</p>", unsafe_allow_html=True)
 
 # Data Input
@@ -167,4 +167,4 @@ if st.button("Run Test"):
     except Exception as e:
         st.error(f"An error occurred during the test: {e}")
 
-st.write("Thank you for using the Hypothesis Testing Application!")
+
