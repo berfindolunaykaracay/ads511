@@ -82,15 +82,19 @@ uploaded_file = st.file_uploader("Upload your CSV file", type=["csv"])
 all_groups = []
 if uploaded_file is not None:
     data = pd.read_csv(uploaded_file)
-    st.write("Dataset Information:")
-    st.write(data.info())
+    num_rows, num_cols = data.shape
+    st.write(f"### Dataset Information:")
+    st.write(f"The dataset contains **{num_rows} rows** and **{num_cols} columns**.")
 
-    st.write("Full Dataset Preview:")
+    st.write("### Full Dataset Preview:")
     st.write(data)
 
-    columns = st.multiselect("Select columns for testing", options=data.columns)
+    st.write("### Select Columns for Testing:")
+    columns = st.multiselect("Select columns", options=data.columns)
     if columns:
         all_groups = [data[col].dropna().tolist() for col in columns]
+        st.write("### Selected Columns Preview:")
+        st.write(data[columns])
 
 if not all_groups:
     st.warning("No valid data provided.")
