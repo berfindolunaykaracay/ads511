@@ -121,26 +121,27 @@ if data_type == "Numerical Data":
     st.markdown("<h2 style='text-align: center;'>Step 2: Assumption Check</h2>", unsafe_allow_html=True)
     st.write("Performing Normality and Variance Homogeneity Tests")
 
-    results = []
     for col_name, group in zip(column_names, all_groups):
         try:
             p_normality, is_normal = check_normality(group)
-            results.append((col_name, "Normality", p_normality, "Pass" if is_normal else "Fail"))
+            if is_normal:
+                st.success(f"Normality Test for {col_name}: P-value = {p_normality:.4f} (Pass)")
+            else:
+                st.warning(f"Normality Test for {col_name}: P-value = {p_normality:.4f} (Fail)")
         except ValueError as e:
             st.error(f"Error with column {col_name}: {e}")
 
     if len(all_groups) > 1:
         try:
             p_variance, is_homogeneous = check_variance_homogeneity(all_groups)
-            results.append(("All Selected Columns", "Variance Homogeneity", p_variance, "Pass" if is_homogeneous else "Fail"))
+            if is_homogeneous:
+                st.success(f"Variance Homogeneity Test: P-value = {p_variance:.4f} (Pass)")
+            else:
+                st.warning(f"Variance Homogeneity Test: P-value = {p_variance:.4f} (Fail)")
         except Exception as e:
             st.error(f"Error in Variance Homogeneity Test: {e}")
 
-    results_df = pd.DataFrame(results, columns=["Column", "Test", "P-value", "Result"])
-    st.write("### Assumption Check Results:")
-    st.write(results_df)
-
-    parametric = all(res[3] == "Pass" for res in results if res[1] != "Variance Homogeneity")
+    parametric = all(check_normality(group)[1] for group in all_groups)
     if parametric:
         st.info("Your data is parametric.")
     else:
@@ -190,4 +191,3 @@ if st.button("Run Test"):
     except Exception as e:
         st.error(f"An error occurred while performing the test: {e}")
 
-st.write("Thank you for using the Hypothesis Testing Application!")
