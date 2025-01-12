@@ -89,27 +89,29 @@ if uploaded_file is not None:
     st.write("### Full Dataset Preview:")
     st.write(data)
 
-    st.write("### Select Columns for Testing:")
-    columns = st.multiselect("Select columns", options=data.columns)
-    if columns:
-        all_groups = [data[col].dropna().tolist() for col in columns]
+    columns = st.radio("Select one of the following options:", ("Select All Columns", "Manually Select Columns"))
+
+    if columns == "Select All Columns":
+        all_groups = [data[col].dropna().tolist() for col in data.columns]
         st.write("### Selected Columns Preview:")
-        st.write(data[columns])
+        st.write(data)
+
+    elif columns == "Manually Select Columns":
+        selected_columns = st.multiselect("Choose columns to include", options=data.columns)
+        if selected_columns:
+            all_groups = [data[col].dropna().tolist() for col in selected_columns]
+            st.write("### Selected Columns Preview:")
+            st.write(data[selected_columns])
 
 if not all_groups:
     st.warning("No valid data provided.")
     st.stop()
 
 # Step 1.5: Data Type Selection
-data_type = st.radio(
-    "What is your data type?",
-    options=["Select", "Numerical Data", "Categorical Data"],
-    index=0
+data_type = st.selectbox(
+    "Select your data type:",
+    options=["Numerical Data", "Categorical Data"]
 )
-
-if data_type == "Select":
-    st.warning("Please select your data type to proceed.")
-    st.stop()
 
 # Step 2: Assumption Checks (if Numerical Data)
 if data_type == "Numerical Data":
