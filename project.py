@@ -72,12 +72,12 @@ for category, tests in [("Parametric Tests", numerical_tests_parametric),
             st.write(description)
 
 # Title and Introduction
-st.title("Hypothesis Testing Application")
-st.markdown("This app allows you to perform various **hypothesis tests** with ease. Simply upload your data or enter it manually, and let the app guide you through hypothesis testing.")
+st.markdown("<h1 style='text-align: center;'>Hypothesis Testing Application</h1>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: center;'>This app allows you to perform various <b>hypothesis tests</b> with ease. Simply upload your data, and let the app guide you through hypothesis testing.</p>", unsafe_allow_html=True)
 
 # Step 1: Data Input
-st.header("Step 1: Data Input")
-data_choice = st.radio("How would you like to input your data?", ("Upload CSV", "Enter Manually"))
+st.markdown("<h2 style='text-align: center;'>Step 1: Data Input</h2>", unsafe_allow_html=True)
+data_choice = st.radio("How would you like to input your data?", ("Upload CSV"))
 
 all_groups = []
 if data_choice == "Upload CSV":
@@ -90,15 +90,6 @@ if data_choice == "Upload CSV":
         columns = st.multiselect("Select columns for testing", options=data.columns)
         if columns:
             all_groups = [data[col].dropna().tolist() for col in columns]
-
-elif data_choice == "Enter Manually":
-    st.write("Enter your data as arrays. Type each array separately.")
-    group_input = st.text_area("Enter arrays (e.g., [1,2,3]) one by one, separated by new lines.")
-    if group_input:
-        try:
-            all_groups = [eval(line.strip()) for line in group_input.splitlines() if line.strip()]
-        except Exception as e:
-            st.error(f"Error in parsing input: {e}")
 
 if not all_groups:
     st.warning("No valid data provided.")
@@ -117,7 +108,7 @@ if data_type == "Select":
 
 # Step 2: Assumption Checks (if Numerical Data)
 if data_type == "Numerical Data":
-    st.header("Step 2: Assumption Check")
+    st.markdown("<h2 style='text-align: center;'>Step 2: Assumption Check</h2>", unsafe_allow_html=True)
     st.write("Performing Normality and Variance Homogeneity Tests")
 
     results = []
@@ -145,7 +136,7 @@ if data_type == "Numerical Data":
         st.info("Your data is non-parametric.")
 
 # Step 3: Hypothesis Testing
-st.header("Step 3: Select and Perform a Hypothesis Test")
+st.markdown("<h2 style='text-align: center;'>Step 3: Select and Perform a Hypothesis Test</h2>", unsafe_allow_html=True)
 
 if data_type == "Numerical Data":
     test_list = numerical_tests_parametric if parametric else numerical_tests_nonparametric
