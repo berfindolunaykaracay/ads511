@@ -90,21 +90,12 @@ if uploaded_file is not None:
     st.write("### Full Dataset Preview:")
     st.write(data)
 
-    columns = st.radio("Choose column selection method:", ("Select All Columns", "Manually Select Columns"))
-
-    if columns == "Select All Columns":
-        column_names = data.select_dtypes(include=[np.number]).columns.tolist()
+    selected_columns = st.multiselect("Pick columns to include", options=data.columns)
+    if selected_columns:
+        column_names = [col for col in selected_columns if pd.api.types.is_numeric_dtype(data[col])]
         all_groups = [data[col].dropna().tolist() for col in column_names]
         st.write("### Selected Columns Preview:")
         st.write(data[column_names])
-
-    elif columns == "Manually Select Columns":
-        selected_columns = st.multiselect("Pick columns to include", options=data.columns)
-        if selected_columns:
-            column_names = [col for col in selected_columns if pd.api.types.is_numeric_dtype(data[col])]
-            all_groups = [data[col].dropna().tolist() for col in column_names]
-            st.write("### Selected Columns Preview:")
-            st.write(data[column_names])
 
 if not all_groups:
     st.warning("No valid data provided.")
