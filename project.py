@@ -92,14 +92,14 @@ if uploaded_file is not None:
     columns = st.radio("Select one of the following options:", ("Select All Columns", "Manually Select Columns"))
 
     if columns == "Select All Columns":
-        all_groups = [data[col].dropna().tolist() for col in data.columns]
+        all_groups = [data[col].dropna().tolist() for col in data.columns if pd.api.types.is_numeric_dtype(data[col])]
         st.write("### Selected Columns Preview:")
-        st.write(data)
+        st.write(data.select_dtypes(include=[np.number]))
 
     elif columns == "Manually Select Columns":
         selected_columns = st.multiselect("Choose columns to include", options=data.columns)
         if selected_columns:
-            all_groups = [data[col].dropna().tolist() for col in selected_columns]
+            all_groups = [data[col].dropna().tolist() for col in selected_columns if pd.api.types.is_numeric_dtype(data[col])]
             st.write("### Selected Columns Preview:")
             st.write(data[selected_columns])
 
@@ -156,7 +156,22 @@ selected_test = st.selectbox("Choose the specific test to perform:", list(test_l
 st.info(f"**Test Description:** {test_list[selected_test]}")
 
 if st.button("Run Test"):
-    st.write(f"Performing {selected_test}...")
-    # Add test-specific implementation logic here.
+    try:
+        if selected_test == "Independent T-Test" and len(all_groups) >= 2:
+            t_stat, p_value = stats.ttest_ind(all_groups[0], all_groups[1])
+            st.success(f"Independent T-Test: t-statistic = {t_stat:.4f}, p-value = {p_value:.4f}")
+        elif selected_test == "Dependent (Paired) T-Test" and len(all_groups) >= 2:
+            t_stat, p_value = stats.ttest_rel(all_groups[0], all_groups[1])
+            st.success(f"Dependent T-Test: t-statistic = {t_stat:.4f}, p-value = {p_value:.4f}")
+        elif selected_test == "One-Way ANOVA" and len(all_groups) > 2:
+            f_stat, p_value = stats.f_oneway(*all_groups)
+            st.success(f"One-Way ANOVA: F-statistic = {f_stat:.4f}, p-value = {p_value:.4f}")
+        elif selected_test == "Mann-Whitney U Test" and len(all_groups) >= 2:
+            u_stat, p_value = stats.mannwhitneyu(all_groups[0], all_groups[1])
+            st.success(f"Mann-Whitney U Test: U-statistic = {u_stat:.4f}, p-value = {p_value:.4f}")
+        else:
+            st.error("The selected test is not implemented or requires more groups.")
+    except Exception as e:
+        st.error(f"An error occurred while performing the test: {e}")
 
 st.write("Thank you for using the Hypothesis Testing Application!")
