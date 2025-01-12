@@ -82,8 +82,11 @@ uploaded_file = st.file_uploader("Upload your CSV file", type=["csv"])
 all_groups = []
 if uploaded_file is not None:
     data = pd.read_csv(uploaded_file)
-    st.write("Dataset Preview:")
-    st.write(data.head())
+    st.write("Dataset Information:")
+    st.write(data.info())
+
+    st.write("Full Dataset Preview:")
+    st.write(data)
 
     columns = st.multiselect("Select columns for testing", options=data.columns)
     if columns:
