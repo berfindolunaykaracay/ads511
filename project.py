@@ -11,6 +11,10 @@ def check_normality(data):
         raise ValueError("Data must be a list, NumPy array, or pandas Series.")
     data = np.array(data)
 
+    # Ensure there are enough data points for the test
+    if len(data) < 3:
+        raise ValueError("Normality test requires at least 3 data points.")
+
     test_stat_normality, p_value_normality = stats.shapiro(data)
     return p_value_normality, p_value_normality >= 0.05
 
@@ -143,29 +147,35 @@ if st.button("Run Test"):
         if selected_test == "Independent T-Test" and len(all_groups) >= 2:
             t_stat, p_value = stats.ttest_ind(all_groups[0], all_groups[1])
             hypothesis_result = "rejected" if p_value < 0.05 else "not rejected"
-            st.success(f"Independent T-Test Results: t-statistic = {t_stat:.4f}, p-value = {p_value:.4f}. Null hypothesis is {hypothesis_result}.")
+            color = "red" if p_value < 0.05 else "green"
+            st.markdown(f"<p style='color:{color};'>Independent T-Test Results: t-statistic = {t_stat:.4f}, p-value = {p_value:.4f}. Null hypothesis is {hypothesis_result}.</p>", unsafe_allow_html=True)
         elif selected_test == "Dependent (Paired) T-Test" and len(all_groups) >= 2:
             t_stat, p_value = stats.ttest_rel(all_groups[0], all_groups[1])
             hypothesis_result = "rejected" if p_value < 0.05 else "not rejected"
-            st.success(f"Dependent T-Test Results: t-statistic = {t_stat:.4f}, p-value = {p_value:.4f}. Null hypothesis is {hypothesis_result}.")
+            color = "red" if p_value < 0.05 else "green"
+            st.markdown(f"<p style='color:{color};'>Dependent T-Test Results: t-statistic = {t_stat:.4f}, p-value = {p_value:.4f}. Null hypothesis is {hypothesis_result}.</p>", unsafe_allow_html=True)
         elif selected_test == "One-Way ANOVA" and len(all_groups) > 2:
             f_stat, p_value = stats.f_oneway(*all_groups)
             hypothesis_result = "rejected" if p_value < 0.05 else "not rejected"
-            st.success(f"One-Way ANOVA Results: F-statistic = {f_stat:.4f}, p-value = {p_value:.4f}. Null hypothesis is {hypothesis_result}.")
+            color = "red" if p_value < 0.05 else "green"
+            st.markdown(f"<p style='color:{color};'>One-Way ANOVA Results: F-statistic = {f_stat:.4f}, p-value = {p_value:.4f}. Null hypothesis is {hypothesis_result}.</p>", unsafe_allow_html=True)
         elif selected_test == "Mann-Whitney U Test" and len(all_groups) >= 2:
             u_stat, p_value = stats.mannwhitneyu(all_groups[0], all_groups[1])
             hypothesis_result = "rejected" if p_value < 0.05 else "not rejected"
-            st.success(f"Mann-Whitney U Test Results: U-statistic = {u_stat:.4f}, p-value = {p_value:.4f}. Null hypothesis is {hypothesis_result}.")
+            color = "red" if p_value < 0.05 else "green"
+            st.markdown(f"<p style='color:{color};'>Mann-Whitney U Test Results: U-statistic = {u_stat:.4f}, p-value = {p_value:.4f}. Null hypothesis is {hypothesis_result}.</p>", unsafe_allow_html=True)
         elif selected_test in ["Chi-Squared Test", "Fisher's Exact Test"] and len(column_names) == 2:
             contingency_table = pd.crosstab(data[column_names[0]], data[column_names[1]])
             if selected_test == "Chi-Squared Test":
                 chi2, p_value, _, _ = chi2_contingency(contingency_table)
                 hypothesis_result = "rejected" if p_value < 0.05 else "not rejected"
-                st.success(f"Chi-Squared Test Results: Chi2 = {chi2:.4f}, p-value = {p_value:.4f}. Null hypothesis is {hypothesis_result}.")
+                color = "red" if p_value < 0.05 else "green"
+                st.markdown(f"<p style='color:{color};'>Chi-Squared Test Results: Chi2 = {chi2:.4f}, p-value = {p_value:.4f}. Null hypothesis is {hypothesis_result}.</p>", unsafe_allow_html=True)
             elif selected_test == "Fisher's Exact Test":
                 odds_ratio, p_value = fisher_exact(contingency_table)
                 hypothesis_result = "rejected" if p_value < 0.05 else "not rejected"
-                st.success(f"Fisher's Exact Test Results: Odds Ratio = {odds_ratio:.4f}, p-value = {p_value:.4f}. Null hypothesis is {hypothesis_result}.")
+                color = "red" if p_value < 0.05 else "green"
+                st.markdown(f"<p style='color:{color};'>Fisher's Exact Test Results: Odds Ratio = {odds_ratio:.4f}, p-value = {p_value:.4f}. Null hypothesis is {hypothesis_result}.</p>", unsafe_allow_html=True)
         else:
             st.error("The selected test is not implemented or requires more groups.")
     except Exception as e:
