@@ -87,49 +87,46 @@ if data_type == "Numerical Data":
     st.markdown("<h2 style='text-align: center;'>Assumption Checks</h2>", unsafe_allow_html=True)
     st.write("Verifying Normality and Variance Homogeneity Assumptions")
 
+    normality_results = []
     for col_name, group in zip(column_names, all_groups):
         try:
             p_normality, is_normal = check_normality(group)
-            if is_normal:
-                st.success(f"Normality Check for {col_name}: P-value = {p_normality:.4f} (Pass)")
-            else:
-                st.warning(f"Normality Check for {col_name}: P-value = {p_normality:.4f} (Fail)")
+            normality_results.append((col_name, p_normality, "Pass" if is_normal else "Fail"))
         except ValueError as e:
             st.error(f"Error with column {col_name}: {e}")
 
     if len(all_groups) > 1:
         try:
             p_variance, is_homogeneous = check_variance_homogeneity(all_groups)
-            if is_homogeneous:
-                st.success(f"Variance Homogeneity Check: P-value = {p_variance:.4f} (Pass)")
-            else:
-                st.warning(f"Variance Homogeneity Check: P-value = {p_variance:.4f} (Fail)")
+            st.write(f"### Variance Homogeneity Check: P-value = {p_variance:.4f}")
+            st.write("Pass" if is_homogeneous else "Fail")
         except Exception as e:
             st.error(f"Error in Variance Homogeneity Check: {e}")
 
-    parametric = all(check_normality(group)[1] for group in all_groups)
-    if parametric:
-        st.info("The data meets parametric assumptions.")
-    else:
-        st.info("The data does not meet parametric assumptions.")
+    # Recommended Test Based on Assumptions
+    if len(all_groups) == 2:
+        if all(res[2] == "Pass" for res in normality_results) and is_homogeneous:
+            st.success("Recommended Test: Independent T-Test or Dependent T-Test (for paired groups).")
+        else:
+            st.success("Recommended Test: Mann-Whitney U Test or Wilcoxon Signed-Rank Test (for paired groups).")
+    elif len(all_groups) > 2:
+        if all(res[2] == "Pass" for res in normality_results) and is_homogeneous:
+            st.success("Recommended Test: One-Way ANOVA.")
+        else:
+            st.success("Recommended Test: Kruskal-Wallis Test or Friedman Test (for repeated measures).")
 
-    # Recommended Test
-    if parametric and len(all_groups) == 2:
-        st.success("Recommended Test: Independent T-Test or Dependent T-Test (for paired groups).")
-    elif parametric and len(all_groups) > 2:
-        st.success("Recommended Test: One-Way ANOVA.")
-    elif not parametric and len(all_groups) == 2:
-        st.success("Recommended Test: Mann-Whitney U Test or Wilcoxon Signed-Rank Test (for paired groups).")
-    elif not parametric and len(all_groups) > 2:
-        st.success("Recommended Test: Kruskal-Wallis Test or Friedman Test (for repeated measures).")
-    else:
-        st.info("Ensure data compatibility with selected test.")
+if data_type == "Categorical Data":
+    st.markdown("<h2 style='text-align: center;'>Test Recommendation</h2>", unsafe_allow_html=True)
+    if len(column_names) == 2:
+        st.success("Recommended Test: Chi-Squared Test or Fisher's Exact Test (for small sample sizes).")
+    elif len(column_names) > 2:
+        st.success("Recommended Test: Cochran Q Test (for repeated measures) or McNemar Test (for paired comparisons).")
 
 # Hypothesis Testing
 st.markdown("<h2 style='text-align: center;'>Hypothesis Testing</h2>", unsafe_allow_html=True)
 
 if data_type == "Numerical Data":
-    test_list = numerical_tests_parametric if parametric else numerical_tests_nonparametric
+    test_list = numerical_tests_parametric if all(res[2] == "Pass" for res in normality_results) and is_homogeneous else numerical_tests_nonparametric
 else:
     test_list = categorical_tests
     st.write("### Selected Categorical Columns Preview:")
@@ -142,29 +139,34 @@ st.info(f"**Test Overview:** {test_list[selected_test]}")
 
 if st.button("Run Test"):
     try:
+        hypothesis_result = ""
         if selected_test == "Independent T-Test" and len(all_groups) >= 2:
             t_stat, p_value = stats.ttest_ind(all_groups[0], all_groups[1])
-            st.success(f"Independent T-Test Results: t-statistic = {t_stat:.4f}, p-value = {p_value:.4f}")
+            hypothesis_result = "rejected" if p_value < 0.05 else "not rejected"
+            st.success(f"Independent T-Test Results: t-statistic = {t_stat:.4f}, p-value = {p_value:.4f}. Null hypothesis is {hypothesis_result}.")
         elif selected_test == "Dependent (Paired) T-Test" and len(all_groups) >= 2:
             t_stat, p_value = stats.ttest_rel(all_groups[0], all_groups[1])
-            st.success(f"Dependent T-Test Results: t-statistic = {t_stat:.4f}, p-value = {p_value:.4f}")
+            hypothesis_result = "rejected" if p_value < 0.05 else "not rejected"
+            st.success(f"Dependent T-Test Results: t-statistic = {t_stat:.4f}, p-value = {p_value:.4f}. Null hypothesis is {hypothesis_result}.")
         elif selected_test == "One-Way ANOVA" and len(all_groups) > 2:
             f_stat, p_value = stats.f_oneway(*all_groups)
-            st.success(f"One-Way ANOVA Results: F-statistic = {f_stat:.4f}, p-value = {p_value:.4f}")
+            hypothesis_result = "rejected" if p_value < 0.05 else "not rejected"
+            st.success(f"One-Way ANOVA Results: F-statistic = {f_stat:.4f}, p-value = {p_value:.4f}. Null hypothesis is {hypothesis_result}.")
         elif selected_test == "Mann-Whitney U Test" and len(all_groups) >= 2:
             u_stat, p_value = stats.mannwhitneyu(all_groups[0], all_groups[1])
-            st.success(f"Mann-Whitney U Test Results: U-statistic = {u_stat:.4f}, p-value = {p_value:.4f}")
+            hypothesis_result = "rejected" if p_value < 0.05 else "not rejected"
+            st.success(f"Mann-Whitney U Test Results: U-statistic = {u_stat:.4f}, p-value = {p_value:.4f}. Null hypothesis is {hypothesis_result}.")
         elif selected_test in ["Chi-Squared Test", "Fisher's Exact Test"] and len(column_names) == 2:
             contingency_table = pd.crosstab(data[column_names[0]], data[column_names[1]])
             if selected_test == "Chi-Squared Test":
                 chi2, p_value, _, _ = chi2_contingency(contingency_table)
-                st.success(f"Chi-Squared Test Results: Chi2 = {chi2:.4f}, p-value = {p_value:.4f}")
+                hypothesis_result = "rejected" if p_value < 0.05 else "not rejected"
+                st.success(f"Chi-Squared Test Results: Chi2 = {chi2:.4f}, p-value = {p_value:.4f}. Null hypothesis is {hypothesis_result}.")
             elif selected_test == "Fisher's Exact Test":
                 odds_ratio, p_value = fisher_exact(contingency_table)
-                st.success(f"Fisher's Exact Test Results: Odds Ratio = {odds_ratio:.4f}, p-value = {p_value:.4f}")
+                hypothesis_result = "rejected" if p_value < 0.05 else "not rejected"
+                st.success(f"Fisher's Exact Test Results: Odds Ratio = {odds_ratio:.4f}, p-value = {p_value:.4f}. Null hypothesis is {hypothesis_result}.")
         else:
             st.error("The selected test is not implemented or requires more groups.")
     except Exception as e:
         st.error(f"An error occurred during the test: {e}")
-
-
