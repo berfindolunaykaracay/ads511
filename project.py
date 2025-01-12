@@ -77,19 +77,17 @@ st.markdown("<p style='text-align: center;'>This app allows you to perform vario
 
 # Step 1: Data Input
 st.markdown("<h2 style='text-align: center;'>Step 1: Data Input</h2>", unsafe_allow_html=True)
-data_choice = st.radio("How would you like to input your data?", ("Upload CSV"))
+uploaded_file = st.file_uploader("Upload your CSV file", type=["csv"])
 
 all_groups = []
-if data_choice == "Upload CSV":
-    uploaded_file = st.file_uploader("Upload your CSV file", type=["csv"])
-    if uploaded_file is not None:
-        data = pd.read_csv(uploaded_file)
-        st.write("Dataset Preview:")
-        st.write(data.head())
+if uploaded_file is not None:
+    data = pd.read_csv(uploaded_file)
+    st.write("Dataset Preview:")
+    st.write(data.head())
 
-        columns = st.multiselect("Select columns for testing", options=data.columns)
-        if columns:
-            all_groups = [data[col].dropna().tolist() for col in columns]
+    columns = st.multiselect("Select columns for testing", options=data.columns)
+    if columns:
+        all_groups = [data[col].dropna().tolist() for col in columns]
 
 if not all_groups:
     st.warning("No valid data provided.")
