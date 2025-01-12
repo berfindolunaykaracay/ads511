@@ -46,31 +46,6 @@ categorical_tests = {
 # Streamlit app starts here
 st.set_page_config(page_title="Hypothesis Testing Application", page_icon="⚛", layout="wide")
 
-# Sidebar header and logo
-try:
-    st.sidebar.image("TEDU_LOGO.png", use_container_width=True)
-except Exception:
-    st.sidebar.warning("Logo file not found. Please check the file path.")
-
-st.sidebar.title("ADS 511: Statistical Inference Methods")
-st.sidebar.write("Developed by: Serdar Hosver")
-
-st.sidebar.title("Hypothesis Testing Map")
-try:
-    st.sidebar.image("Hypothesis_Test_Map.png", use_container_width=True)
-except Exception:
-    st.sidebar.warning("Hypothesis Testing Map image not found. Please check the file path.")
-
-# Sidebar to display all available tests
-st.sidebar.header("List of Available Hypothesis Tests")
-for category, tests in [("Parametric Tests", numerical_tests_parametric),
-                        ("Non-Parametric Tests", numerical_tests_nonparametric),
-                        ("Categorical Tests", categorical_tests)]:
-    st.sidebar.subheader(category)
-    for test, description in tests.items():
-        with st.sidebar.expander(f"ℹ️ {test}"):
-            st.write(description)
-
 # Title and Introduction
 st.markdown("<h1 style='text-align: center;'>Hypothesis Testing Application</h1>", unsafe_allow_html=True)
 st.markdown("<p style='text-align: center;'>This application helps you conduct various <b>hypothesis tests</b>. Simply upload your data and proceed with guided testing steps.</p>", unsafe_allow_html=True)
@@ -92,7 +67,7 @@ if uploaded_file is not None:
 
     selected_columns = st.multiselect("Pick columns to include", options=data.columns)
     if selected_columns:
-        column_names = [col for col in selected_columns if pd.api.types.is_numeric_dtype(data[col])]
+        column_names = selected_columns
         all_groups = [data[col].dropna().tolist() for col in column_names]
         st.write("### Selected Columns Preview:")
         st.write(data[column_names])
@@ -157,6 +132,8 @@ if data_type == "Numerical Data":
     test_list = numerical_tests_parametric if parametric else numerical_tests_nonparametric
 else:
     test_list = categorical_tests
+    st.write("### Selected Categorical Columns Preview:")
+    st.write(data[column_names])
 
 selected_test = st.selectbox("Choose the test you want to perform:", list(test_list.keys()))
 
@@ -177,6 +154,14 @@ if st.button("Run Test"):
         elif selected_test == "Mann-Whitney U Test" and len(all_groups) >= 2:
             u_stat, p_value = stats.mannwhitneyu(all_groups[0], all_groups[1])
             st.success(f"Mann-Whitney U Test Results: U-statistic = {u_stat:.4f}, p-value = {p_value:.4f}")
+        elif selected_test in ["Chi-Squared Test", "Fisher's Exact Test"] and len(column_names) == 2:
+            contingency_table = pd.crosstab(data[column_names[0]], data[column_names[1]])
+            if selected_test == "Chi-Squared Test":
+                chi2, p_value, _, _ = chi2_contingency(contingency_table)
+                st.success(f"Chi-Squared Test Results: Chi2 = {chi2:.4f}, p-value = {p_value:.4f}")
+            elif selected_test == "Fisher's Exact Test":
+                odds_ratio, p_value = fisher_exact(contingency_table)
+                st.success(f"Fisher's Exact Test Results: Odds Ratio = {odds_ratio:.4f}, p-value = {p_value:.4f}")
         else:
             st.error("The selected test is not implemented or requires more groups.")
     except Exception as e:
