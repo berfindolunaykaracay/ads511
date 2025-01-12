@@ -80,6 +80,7 @@ st.markdown("<h2 style='text-align: center;'>Step 1: Data Input</h2>", unsafe_al
 uploaded_file = st.file_uploader("Upload your CSV file", type=["csv"])
 
 all_groups = []
+column_names = []
 if uploaded_file is not None:
     data = pd.read_csv(uploaded_file)
     num_rows, num_cols = data.shape
@@ -92,16 +93,18 @@ if uploaded_file is not None:
     columns = st.radio("Select one of the following options:", ("Select All Columns", "Manually Select Columns"))
 
     if columns == "Select All Columns":
-        all_groups = [data[col].dropna().tolist() for col in data.columns if pd.api.types.is_numeric_dtype(data[col])]
+        column_names = data.select_dtypes(include=[np.number]).columns.tolist()
+        all_groups = [data[col].dropna().tolist() for col in column_names]
         st.write("### Selected Columns Preview:")
-        st.write(data.select_dtypes(include=[np.number]))
+        st.write(data[column_names])
 
     elif columns == "Manually Select Columns":
         selected_columns = st.multiselect("Choose columns to include", options=data.columns)
         if selected_columns:
-            all_groups = [data[col].dropna().tolist() for col in selected_columns if pd.api.types.is_numeric_dtype(data[col])]
+            column_names = [col for col in selected_columns if pd.api.types.is_numeric_dtype(data[col])]
+            all_groups = [data[col].dropna().tolist() for col in column_names]
             st.write("### Selected Columns Preview:")
-            st.write(data[selected_columns])
+            st.write(data[column_names])
 
 if not all_groups:
     st.warning("No valid data provided.")
@@ -119,24 +122,25 @@ if data_type == "Numerical Data":
     st.write("Performing Normality and Variance Homogeneity Tests")
 
     results = []
-    for i, group in enumerate(all_groups, start=1):
+    for col_name, group in zip(column_names, all_groups):
         try:
             p_normality, is_normal = check_normality(group)
-            results.append((f"Group {i}", "Normality", p_normality, "Pass" if is_normal else "Fail"))
+            results.append((col_name, "Normality", p_normality, "Pass" if is_normal else "Fail"))
         except ValueError as e:
-            st.error(f"Error with Group {i}: {e}")
+            st.error(f"Error with column {col_name}: {e}")
 
     if len(all_groups) > 1:
         try:
             p_variance, is_homogeneous = check_variance_homogeneity(all_groups)
-            results.append(("All Groups", "Variance Homogeneity", p_variance, "Pass" if is_homogeneous else "Fail"))
+            results.append(("All Selected Columns", "Variance Homogeneity", p_variance, "Pass" if is_homogeneous else "Fail"))
         except Exception as e:
             st.error(f"Error in Variance Homogeneity Test: {e}")
 
-    results_df = pd.DataFrame(results, columns=["Group", "Test", "P-value", "Result"])
-    st.table(results_df)
+    results_df = pd.DataFrame(results, columns=["Column", "Test", "P-value", "Result"])
+    st.write("### Assumption Check Results:")
+    st.write(results_df)
 
-    parametric = all(res[3] == "Pass" for res in results)
+    parametric = all(res[3] == "Pass" for res in results if res[1] != "Variance Homogeneity")
     if parametric:
         st.info("Your data is parametric.")
     else:
